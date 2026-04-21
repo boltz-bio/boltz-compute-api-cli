@@ -16,7 +16,7 @@ func TestSmallMoleculeDesignRetrieve(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"small-molecule:design", "retrieve",
-			"--run-id", "run_id",
+			"--id", "id",
 			"--workspace-id", "workspace_id",
 		)
 	})
@@ -45,7 +45,7 @@ func TestSmallMoleculeDesignDeleteData(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"small-molecule:design", "delete-data",
-			"--run-id", "run_id",
+			"--id", "id",
 		)
 	})
 }
@@ -164,7 +164,7 @@ func TestSmallMoleculeDesignListResults(t *testing.T) {
 			"--api-key", "string",
 			"small-molecule:design", "list-results",
 			"--max-items", "10",
-			"--run-id", "run_id",
+			"--id", "id",
 			"--after-id", "after_id",
 			"--before-id", "before_id",
 			"--limit", "1",
@@ -286,7 +286,7 @@ func TestSmallMoleculeDesignStop(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"small-molecule:design", "stop",
-			"--run-id", "run_id",
+			"--id", "id",
 		)
 	})
 }
