@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.0 (2026-04-21)
+
+Full Changelog: [v0.4.0...v0.5.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.4.0...v0.5.0)
+
+### ⚠ BREAKING CHANGES
+
+* **compute-api:** rename pipeline route params to id
+
+### Features
+
+* **cli:** add download-results command ([7f541b8](https://github.com/boltz-bio/boltz-compute-api-cli/commit/7f541b89f13e1cef44e706d0c7bb54a46108deca))
+* **compute:** accept user OAuth bearer tokens ([7a7dd8e](https://github.com/boltz-bio/boltz-compute-api-cli/commit/7a7dd8e94ebb3620356d167045d8d871c4d7a342))
+
+
+### Refactors
+
+* **compute-api:** rename pipeline route params to id ([0973e7d](https://github.com/boltz-bio/boltz-compute-api-cli/commit/0973e7dfce74fb872edc3ed69348997f09738ab7))
+
 ## 0.4.0 (2026-04-21)
 
 Full Changelog: [v0.3.0...v0.4.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.3.0...v0.4.0)
