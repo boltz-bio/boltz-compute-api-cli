@@ -73,14 +73,14 @@ var adminUsageList = cli.Command{
 }
 
 func handleAdminUsageList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.AdminUsageListParams{}
+	params := boltzcompute.AdminUsageListParams{}
 
 	options, err := flagOptions(
 		cmd,

@@ -302,7 +302,7 @@ var smallMoleculeDesignStop = cli.Command{
 }
 
 func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])
@@ -312,7 +312,7 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignGetParams{}
+	params := boltzcompute.SmallMoleculeDesignGetParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -351,14 +351,14 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 }
 
 func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignListParams{}
+	params := boltzcompute.SmallMoleculeDesignListParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -406,7 +406,7 @@ func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error 
 }
 
 func handleSmallMoleculeDesignDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])
@@ -448,14 +448,14 @@ func handleSmallMoleculeDesignDeleteData(ctx context.Context, cmd *cli.Command) 
 }
 
 func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignEstimateCostParams{}
+	params := boltzcompute.SmallMoleculeDesignEstimateCostParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -489,7 +489,7 @@ func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command
 }
 
 func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])
@@ -499,7 +499,7 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignListResultsParams{}
+	params := boltzcompute.SmallMoleculeDesignListResultsParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -557,14 +557,14 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 }
 
 func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignStartParams{}
+	params := boltzcompute.SmallMoleculeDesignStartParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -598,7 +598,7 @@ func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error
 }
 
 func handleSmallMoleculeDesignStop(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])

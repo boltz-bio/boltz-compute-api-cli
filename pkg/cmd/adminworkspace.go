@@ -142,14 +142,14 @@ var adminWorkspacesArchive = cli.Command{
 }
 
 func handleAdminWorkspacesCreate(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.AdminWorkspaceNewParams{}
+	params := boltzcompute.AdminWorkspaceNewParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -183,7 +183,7 @@ func handleAdminWorkspacesCreate(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminWorkspacesRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("workspace-id") && len(unusedArgs) > 0 {
 		cmd.Set("workspace-id", unusedArgs[0])
@@ -225,7 +225,7 @@ func handleAdminWorkspacesRetrieve(ctx context.Context, cmd *cli.Command) error 
 }
 
 func handleAdminWorkspacesUpdate(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("workspace-id") && len(unusedArgs) > 0 {
 		cmd.Set("workspace-id", unusedArgs[0])
@@ -235,7 +235,7 @@ func handleAdminWorkspacesUpdate(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.AdminWorkspaceUpdateParams{}
+	params := boltzcompute.AdminWorkspaceUpdateParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -274,14 +274,14 @@ func handleAdminWorkspacesUpdate(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminWorkspacesList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.AdminWorkspaceListParams{}
+	params := boltzcompute.AdminWorkspaceListParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -329,7 +329,7 @@ func handleAdminWorkspacesList(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminWorkspacesArchive(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("workspace-id") && len(unusedArgs) > 0 {
 		cmd.Set("workspace-id", unusedArgs[0])

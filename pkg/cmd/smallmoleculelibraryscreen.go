@@ -314,7 +314,7 @@ var smallMoleculeLibraryScreenStop = cli.Command{
 }
 
 func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])
@@ -324,7 +324,7 @@ func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Comm
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenGetParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenGetParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -363,14 +363,14 @@ func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Comm
 }
 
 func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenListParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenListParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -418,7 +418,7 @@ func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command)
 }
 
 func handleSmallMoleculeLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])
@@ -460,14 +460,14 @@ func handleSmallMoleculeLibraryScreenDeleteData(ctx context.Context, cmd *cli.Co
 }
 
 func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenEstimateCostParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenEstimateCostParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -501,7 +501,7 @@ func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.
 }
 
 func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])
@@ -511,7 +511,7 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenListResultsParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenListResultsParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -569,14 +569,14 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 }
 
 func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenStartParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenStartParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -610,7 +610,7 @@ func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command
 }
 
 func handleSmallMoleculeLibraryScreenStop(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])

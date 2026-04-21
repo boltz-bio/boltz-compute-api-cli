@@ -212,7 +212,7 @@ var proteinDesignStop = cli.Command{
 }
 
 func handleProteinDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])
@@ -222,7 +222,7 @@ func handleProteinDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinDesignGetParams{}
+	params := boltzcompute.ProteinDesignGetParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -261,14 +261,14 @@ func handleProteinDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleProteinDesignList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinDesignListParams{}
+	params := boltzcompute.ProteinDesignListParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -316,7 +316,7 @@ func handleProteinDesignList(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleProteinDesignDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])
@@ -358,14 +358,14 @@ func handleProteinDesignDeleteData(ctx context.Context, cmd *cli.Command) error 
 }
 
 func handleProteinDesignEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinDesignEstimateCostParams{}
+	params := boltzcompute.ProteinDesignEstimateCostParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -399,7 +399,7 @@ func handleProteinDesignEstimateCost(ctx context.Context, cmd *cli.Command) erro
 }
 
 func handleProteinDesignListResults(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])
@@ -409,7 +409,7 @@ func handleProteinDesignListResults(ctx context.Context, cmd *cli.Command) error
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinDesignListResultsParams{}
+	params := boltzcompute.ProteinDesignListResultsParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -467,14 +467,14 @@ func handleProteinDesignListResults(ctx context.Context, cmd *cli.Command) error
 }
 
 func handleProteinDesignStart(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinDesignStartParams{}
+	params := boltzcompute.ProteinDesignStartParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -508,7 +508,7 @@ func handleProteinDesignStart(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleProteinDesignStop(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])

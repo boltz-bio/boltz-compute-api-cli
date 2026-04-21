@@ -129,7 +129,7 @@ git tag, or commit hash):
 To link to a local copy of the SDK:
 
 ```bash
-./scripts/link ../path/to/githubcomboltzbioboltzcomputeapigo-go
+./scripts/link ../path/to/boltzcompute-go
 ```
 
-If you run the link script without any arguments, it will default to `../githubcomboltzbioboltzcomputeapigo-go`.
+If you run the link script without any arguments, it will default to `../boltzcompute-go`.

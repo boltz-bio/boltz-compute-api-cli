@@ -102,14 +102,14 @@ var adminAPIKeysRevoke = cli.Command{
 }
 
 func handleAdminAPIKeysCreate(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.AdminAPIKeyNewParams{}
+	params := boltzcompute.AdminAPIKeyNewParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -143,14 +143,14 @@ func handleAdminAPIKeysCreate(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminAPIKeysList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.AdminAPIKeyListParams{}
+	params := boltzcompute.AdminAPIKeyListParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -198,7 +198,7 @@ func handleAdminAPIKeysList(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminAPIKeysRevoke(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("api-key-id") && len(unusedArgs) > 0 {
 		cmd.Set("api-key-id", unusedArgs[0])
