@@ -1,13 +1,20 @@
 package cmd
 
 import (
+	"fmt"
+	"reflect"
 	"slices"
+	"strings"
 
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
 	"github.com/urfave/cli/v3"
 )
 
-const customizationsAppliedKey = "auth_customizations_applied"
+const (
+	customizationsAppliedKey = "command_customizations_applied"
+	transformUsage           = "The GJSON transformation for data output. For paginated or streamed list commands, this runs on each item; use --format raw with jq for whole-list reshaping."
+)
 
 func ApplyCustomizations(app *cli.Command) {
 	if app == nil {
@@ -31,6 +38,8 @@ func ApplyCustomizations(app *cli.Command) {
 	if !hasCommand(app.Commands, authCommand.Name) {
 		app.Commands = append(app.Commands, authCommand)
 	}
+
+	customizeCommandTree(app)
 }
 
 func authFlags() []cli.Flag {
@@ -109,4 +118,164 @@ func hasFlag(flags []cli.Flag, candidate cli.Flag) bool {
 		}
 	}
 	return false
+}
+
+func customizeCommandTree(cmd *cli.Command) {
+	if cmd == nil {
+		return
+	}
+
+	for _, flag := range cmd.Flags {
+		maybeCustomizeRootFlag(flag)
+		maybeAddIDAlias(cmd, flag)
+		maybeAnnotateRepeatableArrayFlag(flag)
+	}
+
+	for _, child := range cmd.Commands {
+		customizeCommandTree(child)
+	}
+}
+
+func maybeCustomizeRootFlag(flag cli.Flag) {
+	if canonicalFlagName(flag) != "transform" {
+		return
+	}
+	setFlagStringField(flag, "Usage", transformUsage)
+}
+
+func maybeAddIDAlias(cmd *cli.Command, flag cli.Flag) {
+	if !acceptsUniversalIDAlias(cmd.Name) {
+		return
+	}
+
+	switch canonicalFlagName(flag) {
+	case "run-id", "screen-id":
+		appendFlagAlias(flag, "id")
+	}
+}
+
+func maybeAnnotateRepeatableArrayFlag(flag cli.Flag) {
+	inReq, ok := flag.(requestflag.InRequest)
+	if !ok || inReq.GetBodyPath() == "" || !flagDefaultKindIs(flag, reflect.Slice) {
+		return
+	}
+
+	flagName := canonicalFlagName(flag)
+	bodyField := inReq.GetBodyPath()
+	if !isSingularPluralRename(flagName, bodyField) {
+		return
+	}
+
+	usage, ok := flagStringField(flag, "Usage")
+	if !ok {
+		return
+	}
+
+	note := fmt.Sprintf("Repeat --%s to add entries. When piping JSON or YAML, use the body field %s.", flagName, bodyField)
+	if strings.Contains(usage, note) {
+		return
+	}
+	if usage == "" {
+		setFlagStringField(flag, "Usage", note)
+		return
+	}
+	setFlagStringField(flag, "Usage", usage+" "+note)
+}
+
+func acceptsUniversalIDAlias(commandName string) bool {
+	switch commandName {
+	case "retrieve", "list-results", "delete-data", "stop":
+		return true
+	default:
+		return false
+	}
+}
+
+func canonicalFlagName(flag cli.Flag) string {
+	names := flag.Names()
+	if len(names) == 0 {
+		return ""
+	}
+	return names[0]
+}
+
+func flagDefaultKindIs(flag cli.Flag, want reflect.Kind) bool {
+	field, ok := flagField(flag, "Default")
+	return ok && field.Kind() == want
+}
+
+func flagStringField(flag cli.Flag, name string) (string, bool) {
+	field, ok := flagField(flag, name)
+	if !ok || field.Kind() != reflect.String {
+		return "", false
+	}
+	return field.String(), true
+}
+
+func setFlagStringField(flag cli.Flag, name, value string) bool {
+	field, ok := flagField(flag, name)
+	if !ok || field.Kind() != reflect.String || !field.CanSet() {
+		return false
+	}
+	field.SetString(value)
+	return true
+}
+
+func appendFlagAlias(flag cli.Flag, alias string) bool {
+	field, ok := flagField(flag, "Aliases")
+	if !ok || field.Kind() != reflect.Slice || !field.CanSet() {
+		return false
+	}
+
+	for i := 0; i < field.Len(); i++ {
+		if field.Index(i).String() == alias {
+			return false
+		}
+	}
+
+	field.Set(reflect.Append(field, reflect.ValueOf(alias)))
+	return true
+}
+
+func flagField(flag cli.Flag, name string) (reflect.Value, bool) {
+	v := reflect.ValueOf(flag)
+	if !v.IsValid() || v.Kind() != reflect.Pointer || v.IsNil() {
+		return reflect.Value{}, false
+	}
+	v = v.Elem()
+	if v.Kind() != reflect.Struct {
+		return reflect.Value{}, false
+	}
+
+	field := v.FieldByName(name)
+	if !field.IsValid() {
+		return reflect.Value{}, false
+	}
+	return field, true
+}
+
+func isSingularPluralRename(flagName, bodyField string) bool {
+	normalizedFlag := strings.ReplaceAll(flagName, "-", "_")
+	return pluralize(normalizedFlag) == bodyField
+}
+
+func pluralize(s string) string {
+	switch {
+	case len(s) >= 2 && strings.HasSuffix(s, "y") && !isASCIIvowel(s[len(s)-2]):
+		return s[:len(s)-1] + "ies"
+	case strings.HasSuffix(s, "s"), strings.HasSuffix(s, "x"), strings.HasSuffix(s, "z"),
+		strings.HasSuffix(s, "ch"), strings.HasSuffix(s, "sh"):
+		return s + "es"
+	default:
+		return s + "s"
+	}
+}
+
+func isASCIIvowel(b byte) bool {
+	switch b {
+	case 'a', 'e', 'i', 'o', 'u':
+		return true
+	default:
+		return false
+	}
 }

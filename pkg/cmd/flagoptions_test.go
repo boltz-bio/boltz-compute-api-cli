@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/require"
 )
 
@@ -380,6 +381,104 @@ func TestEmbedFilesUploadMetadata(t *testing.T) {
 			require.NoError(t, upload.Close())
 		})
 	}
+}
+
+func TestEmbedFilesStructuredIncludes(t *testing.T) {
+	t.Parallel()
+
+	tmpDir := t.TempDir()
+	inputPath := filepath.Join(tmpDir, "input.json")
+	entitiesPath := filepath.Join(tmpDir, "entities.yaml")
+	newlinePath := filepath.Join(tmpDir, "model.txt")
+
+	require.NoError(t, os.WriteFile(inputPath, []byte(`{"entities":[{"type":"protein","value":"SEQ"}]}`), 0644))
+	require.NoError(t, os.WriteFile(entitiesPath, []byte("- type: protein\n  value: SEQ\n"), 0644))
+	require.NoError(t, os.WriteFile(newlinePath, []byte("boltz-2.1\n"), 0644))
+
+	t.Run("top-level object include", func(t *testing.T) {
+		t.Parallel()
+
+		withEmbedded, err := embedFiles(map[string]any{"input": "@json://" + inputPath}, EmbedText, nil)
+		require.NoError(t, err)
+		require.Equal(t, map[string]any{
+			"input": map[string]any{
+				"entities": []any{
+					map[string]any{"type": "protein", "value": "SEQ"},
+				},
+			},
+		}, withEmbedded)
+	})
+
+	t.Run("nested yaml include from flag-shaped object", func(t *testing.T) {
+		t.Parallel()
+
+		withEmbedded, err := embedFiles(map[string]any{
+			"input": map[string]any{
+				"entities": "@yaml://" + entitiesPath,
+			},
+		}, EmbedText, nil)
+		require.NoError(t, err)
+		require.Equal(t, map[string]any{
+			"input": map[string]any{
+				"entities": []any{
+					map[string]any{"type": "protein", "value": "SEQ"},
+				},
+			},
+		}, withEmbedded)
+	})
+
+	t.Run("nested yaml include from piped yaml body", func(t *testing.T) {
+		t.Parallel()
+
+		var body any
+		require.NoError(t, yaml.Unmarshal([]byte(
+			"input:\n"+
+				"  entities: \"@yaml://"+entitiesPath+"\"\n",
+		), &body))
+
+		withEmbedded, err := embedFiles(body, EmbedText, nil)
+		require.NoError(t, err)
+		require.Equal(t, map[string]any{
+			"input": map[string]any{
+				"entities": []any{
+					map[string]any{"type": "protein", "value": "SEQ"},
+				},
+			},
+		}, withEmbedded)
+	})
+
+	t.Run("escaped structured include stays literal", func(t *testing.T) {
+		t.Parallel()
+
+		withEmbedded, err := embedFiles(map[string]any{"literal": "\\@json://" + inputPath}, EmbedText, nil)
+		require.NoError(t, err)
+		require.Equal(t, map[string]any{"literal": "@json://" + inputPath}, withEmbedded)
+	})
+
+	t.Run("text includes preserve trailing newline", func(t *testing.T) {
+		t.Parallel()
+
+		withEmbedded, err := embedFiles(map[string]any{"model": "@file://" + newlinePath}, EmbedText, nil)
+		require.NoError(t, err)
+		require.Equal(t, map[string]any{"model": "boltz-2.1\n"}, withEmbedded)
+	})
+}
+
+func TestEmbedFilesStructuredIncludeErrors(t *testing.T) {
+	t.Parallel()
+
+	tmpDir := t.TempDir()
+	brokenPath := filepath.Join(tmpDir, "broken.json")
+	require.NoError(t, os.WriteFile(brokenPath, []byte(`{"entities":[}`), 0644))
+
+	_, err := embedFiles(map[string]any{"input": "@json://" + brokenPath}, EmbedText, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "failed to parse @json://")
+	require.Contains(t, err.Error(), brokenPath)
+
+	_, err = embedFiles(map[string]any{"input": "@yaml:///does/not/exist.yaml"}, EmbedText, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "failed to read @yaml:///does/not/exist.yaml")
 }
 
 func writeTestFile(t *testing.T, dir, filename, content string) {

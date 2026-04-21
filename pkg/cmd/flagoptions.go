@@ -20,6 +20,7 @@ import (
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/debugmiddleware"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/structuredinclude"
 	"github.com/boltz-bio/boltz-compute-api-go/option"
 
 	"github.com/goccy/go-yaml"
@@ -186,7 +187,13 @@ func embedFilesValue(v reflect.Value, embedStyle FileEmbedStyle, stdin *onceStdi
 		}
 
 		if embedStyle == EmbedText {
-			if filename, ok := strings.CutPrefix(s, "@data://"); ok {
+			if format, filename, ok := structuredinclude.ParseReference(s); ok {
+				parsed, err := readStructuredInclude(format, filename, stdin)
+				if err != nil {
+					return reflect.Value{}, err
+				}
+				return embedFilesValue(reflectValueOfEmbedded(parsed), embedStyle, stdin)
+			} else if filename, ok := strings.CutPrefix(s, "@data://"); ok {
 				// The "@data://" prefix is for files you explicitly want to upload
 				// as base64-encoded (even if the file itself is plain text)
 				if isStdinPath(filename) {
@@ -313,6 +320,34 @@ func isUTF8TextFile(content []byte) bool {
 		}
 	}
 	return false
+}
+
+func readStructuredInclude(format structuredinclude.Format, path string, stdin *onceStdinReader) (any, error) {
+	var (
+		content []byte
+		err     error
+	)
+
+	if isStdinPath(path) {
+		if stdin == nil {
+			return nil, fmt.Errorf("failed to read @%s://%s: stdin is unavailable", format, path)
+		}
+		content, err = stdin.readAll()
+	} else {
+		content, err = os.ReadFile(path)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to read @%s://%s: %w", format, path, err)
+	}
+
+	return structuredinclude.ParseBytes(format, path, content)
+}
+
+func reflectValueOfEmbedded(v any) reflect.Value {
+	if v == nil {
+		return reflect.Zero(reflect.TypeOf((*any)(nil)).Elem())
+	}
+	return reflect.ValueOf(v)
 }
 
 func flagOptions(
