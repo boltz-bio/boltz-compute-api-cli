@@ -16,7 +16,7 @@ func TestProteinLibraryScreenRetrieve(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:library-screen", "retrieve",
-			"--screen-id", "screen_id",
+			"--id", "id",
 			"--workspace-id", "workspace_id",
 		)
 	})
@@ -45,7 +45,7 @@ func TestProteinLibraryScreenDeleteData(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:library-screen", "delete-data",
-			"--screen-id", "screen_id",
+			"--id", "id",
 		)
 	})
 }
@@ -144,7 +144,7 @@ func TestProteinLibraryScreenListResults(t *testing.T) {
 			"--api-key", "string",
 			"protein:library-screen", "list-results",
 			"--max-items", "10",
-			"--screen-id", "screen_id",
+			"--id", "id",
 			"--after-id", "after_id",
 			"--before-id", "before_id",
 			"--limit", "1",
@@ -246,7 +246,7 @@ func TestProteinLibraryScreenStop(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:library-screen", "stop",
-			"--screen-id", "screen_id",
+			"--id", "id",
 		)
 	})
 }
