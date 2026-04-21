@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 (2026-04-21)
+
+Full Changelog: [v0.3.0...v0.4.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.3.0...v0.4.0)
+
+### Features
+
+* **auth:** add backend OAuth provider ([da95a5f](https://github.com/boltz-bio/boltz-compute-api-cli/commit/da95a5f359c187e70a00cc98ef0c1094a84b4134))
+
 ## 0.3.0 (2026-04-21)
 
 Full Changelog: [v0.2.0...v0.3.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.2.0...v0.3.0)
