@@ -20,6 +20,7 @@ import (
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/debugmiddleware"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/structuredinclude"
 	"github.com/boltz-bio/boltz-compute-api-go/option"
 
 	"github.com/goccy/go-yaml"
@@ -90,7 +91,7 @@ func embedFiles(obj any, embedStyle FileEmbedStyle, stdin *onceStdinReader) (any
 		return obj, nil
 	}
 	v := reflect.ValueOf(obj)
-	result, err := embedFilesValue(v, embedStyle, stdin)
+	result, err := embedFilesValue(v, embedStyle, stdin, newStructuredIncludeState())
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +99,7 @@ func embedFiles(obj any, embedStyle FileEmbedStyle, stdin *onceStdinReader) (any
 }
 
 // Replace "@file.txt" with the file's contents inside a value
-func embedFilesValue(v reflect.Value, embedStyle FileEmbedStyle, stdin *onceStdinReader) (reflect.Value, error) {
+func embedFilesValue(v reflect.Value, embedStyle FileEmbedStyle, stdin *onceStdinReader, includeState *structuredIncludeState) (reflect.Value, error) {
 	// Unwrap interface values to get the concrete type
 	if v.Kind() == reflect.Interface {
 		if v.IsNil() {
@@ -119,7 +120,7 @@ func embedFilesValue(v reflect.Value, embedStyle FileEmbedStyle, stdin *onceStdi
 		for iter.Next() {
 			key := iter.Key()
 			val := iter.Value()
-			newVal, err := embedFilesValue(val, embedStyle, stdin)
+			newVal, err := embedFilesValue(val, embedStyle, stdin, includeState)
 			if err != nil {
 				return reflect.Value{}, err
 			}
@@ -134,7 +135,7 @@ func embedFilesValue(v reflect.Value, embedStyle FileEmbedStyle, stdin *onceStdi
 		// Use `[]any` to allow for types to change when embedding files
 		result := reflect.MakeSlice(reflect.TypeOf([]any{}), v.Len(), v.Len())
 		for i := 0; i < v.Len(); i++ {
-			newVal, err := embedFilesValue(v.Index(i), embedStyle, stdin)
+			newVal, err := embedFilesValue(v.Index(i), embedStyle, stdin, includeState)
 			if err != nil {
 				return reflect.Value{}, err
 			}
@@ -186,7 +187,19 @@ func embedFilesValue(v reflect.Value, embedStyle FileEmbedStyle, stdin *onceStdi
 		}
 
 		if embedStyle == EmbedText {
-			if filename, ok := strings.CutPrefix(s, "@data://"); ok {
+			if format, filename, ok := structuredinclude.ParseReference(s); ok {
+				normalizedPath, err := includeState.enter(filename)
+				if err != nil {
+					return reflect.Value{}, err
+				}
+				defer includeState.exit(normalizedPath)
+
+				parsed, err := readStructuredInclude(format, filename, stdin)
+				if err != nil {
+					return reflect.Value{}, err
+				}
+				return embedFilesValue(reflectValueOfEmbedded(parsed), embedStyle, stdin, includeState)
+			} else if filename, ok := strings.CutPrefix(s, "@data://"); ok {
 				// The "@data://" prefix is for files you explicitly want to upload
 				// as base64-encoded (even if the file itself is plain text)
 				if isStdinPath(filename) {
@@ -291,6 +304,51 @@ func embedFilesValue(v reflect.Value, embedStyle FileEmbedStyle, stdin *onceStdi
 	}
 }
 
+type structuredIncludeState struct {
+	active map[string]int
+	stack  []string
+}
+
+func newStructuredIncludeState() *structuredIncludeState {
+	return &structuredIncludeState{
+		active: map[string]int{},
+	}
+}
+
+func (s *structuredIncludeState) enter(path string) (string, error) {
+	normalizedPath := normalizeStructuredIncludePath(path)
+	if idx, exists := s.active[normalizedPath]; exists {
+		cycle := append(append([]string{}, s.stack[idx:]...), normalizedPath)
+		return "", fmt.Errorf("structured include cycle detected: %s", strings.Join(cycle, " -> "))
+	}
+
+	s.active[normalizedPath] = len(s.stack)
+	s.stack = append(s.stack, normalizedPath)
+	return normalizedPath, nil
+}
+
+func (s *structuredIncludeState) exit(path string) {
+	if path == "" {
+		return
+	}
+
+	delete(s.active, path)
+	if len(s.stack) > 0 && s.stack[len(s.stack)-1] == path {
+		s.stack = s.stack[:len(s.stack)-1]
+	}
+}
+
+func normalizeStructuredIncludePath(path string) string {
+	if isStdinPath(path) {
+		return "stdin"
+	}
+
+	if absPath, err := filepath.Abs(path); err == nil {
+		return filepath.Clean(absPath)
+	}
+	return filepath.Clean(path)
+}
+
 // Guess whether a file's contents are binary (e.g. a .jpg or .mp3), as opposed
 // to plain text (e.g. .txt or .md).
 func isUTF8TextFile(content []byte) bool {
@@ -313,6 +371,34 @@ func isUTF8TextFile(content []byte) bool {
 		}
 	}
 	return false
+}
+
+func readStructuredInclude(format structuredinclude.Format, path string, stdin *onceStdinReader) (any, error) {
+	var (
+		content []byte
+		err     error
+	)
+
+	if isStdinPath(path) {
+		if stdin == nil {
+			return nil, fmt.Errorf("failed to read @%s://%s: stdin is unavailable", format, path)
+		}
+		content, err = stdin.readAll()
+	} else {
+		content, err = os.ReadFile(path)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to read @%s://%s: %w", format, path, err)
+	}
+
+	return structuredinclude.ParseBytes(format, path, content)
+}
+
+func reflectValueOfEmbedded(v any) reflect.Value {
+	if v == nil {
+		return reflect.Zero(reflect.TypeOf((*any)(nil)).Elem())
+	}
+	return reflect.ValueOf(v)
 }
 
 func flagOptions(

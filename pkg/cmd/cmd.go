@@ -225,6 +225,8 @@ func init() {
 		},
 		HideHelpCommand: true,
 	}
+
+	ApplyCustomizations(Command)
 }
 
 func generateManpages(ctx context.Context, c *cli.Command) error {

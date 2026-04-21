@@ -2,12 +2,14 @@ package requestflag
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/structuredinclude"
 	"github.com/goccy/go-yaml"
 	"github.com/urfave/cli/v3"
 )
@@ -466,7 +468,20 @@ func parseCLIArg[
 		}
 
 	default:
-		if strings.HasPrefix(value, "@") {
+		if format, path, ok := structuredinclude.ParseReference(value); ok {
+			if isStructuredIncludeStdinPath(path) {
+				err = fmt.Errorf("@%s://%s is not supported for direct flag values; pipe JSON/YAML on stdin instead", format, path)
+				break
+			}
+
+			content, readErr := os.ReadFile(path)
+			if readErr != nil {
+				err = fmt.Errorf("failed to read @%s://%s: %w", format, path, readErr)
+				break
+			}
+
+			parsedValue, err = structuredinclude.ParseBytesAs[T](format, path, content)
+		} else if strings.HasPrefix(value, "@") {
 			// File literals like @file.txt should work here
 			parsedValue = value
 		} else {
@@ -499,6 +514,14 @@ func parseCLIArg[
 	}
 	return empty, err
 
+}
+
+func isStructuredIncludeStdinPath(path string) bool {
+	switch path {
+	case "-", "/dev/fd/0", "/dev/stdin":
+		return true
+	}
+	return false
 }
 
 // Assuming this string failed to parse as valid YAML, this function will

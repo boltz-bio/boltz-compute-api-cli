@@ -85,7 +85,7 @@ OAuth mode can also be configured with:
 - `--base-url` - Use a custom API backend URL
 - `--format` - Change the output format (`auto`, `explore`, `json`, `jsonl`, `pretty`, `raw`, `yaml`)
 - `--format-error` - Change the output format for errors (`auto`, `explore`, `json`, `jsonl`, `pretty`, `raw`, `yaml`)
-- `--transform` - Transform the data output using [GJSON syntax](https://github.com/tidwall/gjson/blob/master/SYNTAX.md)
+- `--transform` - Transform the data output using [GJSON syntax](https://github.com/tidwall/gjson/blob/master/SYNTAX.md). On paginated or streamed list commands, the transform runs on each item unless you use `--format raw`.
 - `--transform-error` - Transform the error output using [GJSON syntax](https://github.com/tidwall/gjson/blob/master/SYNTAX.md)
 - `--auth-issuer-url` - OIDC issuer URL used for OAuth login and bearer-token refresh
 - `--auth-client-id` - OAuth client ID for public-client login
@@ -158,7 +158,8 @@ Refresh tokens are stored in the OS keychain when available, with a fallback to:
 
 ### Passing files as arguments
 
-To pass files to your API, you can use the `@myfile.ext` syntax:
+To inline file contents into request values, you can use the `@myfile.ext`
+syntax:
 
 ```bash
 boltz-api <command> --arg @abe.jpg
@@ -172,6 +173,20 @@ boltz-api <command> --arg '{image: "@abe.jpg"}'
 boltz-api <command> <<YAML
 arg:
   image: "@abe.jpg"
+YAML
+```
+
+To parse a file as structured JSON or YAML and inject the parsed object or
+array, use `@json://...` or `@yaml://...`:
+
+```bash
+boltz-api predictions:structure-and-binding start \
+  --input @json:///tmp/input.json
+
+boltz-api predictions:structure-and-binding start <<'YAML'
+input:
+  entities: "@yaml:///tmp/entities.yaml"
+model: boltz-2.1
 YAML
 ```
 
@@ -189,12 +204,75 @@ file contents should be sent as a string literal (for plain text files) or as a
 base64-encoded string literal (for binary files). If you need to explicitly send
 the file as either plain text or base64-encoded data, you can use
 `@file://myfile.txt` (for string encoding) or `@data://myfile.dat` (for
-base64-encoding). Note that absolute paths will begin with `@file://` or
-`@data://`, followed by a third `/` (for example, `@file:///tmp/file.txt`).
+base64-encoding). Use `@json://...` or `@yaml://...` only when you want the CLI
+to parse the referenced file and inject structured data. Note that absolute
+paths will begin with `@file://`, `@data://`, `@json://`, or `@yaml://`,
+followed by a third `/` (for example, `@file:///tmp/file.txt`).
 
 ```bash
 boltz-api <command> --arg @data://file.txt
 ```
+
+### CLI flags vs piped JSON/YAML
+
+Some array-valued request body fields are exposed as repeatable singular flags
+for CLI ergonomics. Repeat the flag to add multiple entries:
+
+```bash
+boltz-api small-molecule:library-screen start \
+  --molecule '{smiles: CCO}' \
+  --molecule '{smiles: CCN}' \
+  --target @json:///tmp/target.json
+
+boltz-api protein:library-screen start \
+  --protein @json:///tmp/protein-a.json \
+  --protein @json:///tmp/protein-b.json \
+  --target @json:///tmp/target.json
+```
+
+When piping JSON or YAML on stdin, the CLI merges that data onto the HTTP
+request body, so you must use API body field names, not CLI flag names:
+
+```bash
+boltz-api small-molecule:library-screen start <<'YAML'
+molecules:
+  - smiles: CCO
+  - smiles: CCN
+target: {}
+YAML
+
+boltz-api protein:library-screen start <<'YAML'
+proteins:
+  - {}
+  - {}
+target: {}
+YAML
+```
+
+Use `--help` on a specific command to see the repeatable flag names it accepts.
+
+### Transform behavior
+
+`--transform` applies to the whole response for single-object commands. On
+paginated or streamed list commands, it applies to each emitted item unless you
+use `--format raw`, in which case it runs on the full response page.
+
+Examples:
+
+```bash
+# Per-item extraction on list output
+boltz-api small-molecule:library-screen list-results \
+  --screen-id sm_scr_123 \
+  --transform 'input_molecule.id'
+
+# Whole-list reshaping or aggregation is better handled with jq
+boltz-api small-molecule:library-screen list-results \
+  --screen-id sm_scr_123 \
+  --format raw | jq '.data[] | {id, binding_confidence: .metrics.binding_confidence}'
+```
+
+Array-root expressions such as `#.{...}` are not the right tool in streamed
+per-item mode.
 
 ## Linking different Go SDK versions
 
