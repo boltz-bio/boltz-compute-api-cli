@@ -136,9 +136,19 @@ var smallMoleculeLibraryScreenEstimateCost = requestflag.WithInnerFlags(cli.Comm
 			Usage:      "Protein entities defining the target structure. Each entity represents a protein chain.",
 			InnerField: "entities",
 		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.bonds",
+			Usage:      "Covalent bond constraints between atoms in the target complex. Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "bonds",
+		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.constraints",
+			Usage:      "Structural constraints (pocket and contact). Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "constraints",
+		},
 		&requestflag.InnerFlag[map[string]any]{
 			Name:       "target.pocket-residues",
-			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction. When omitted, the model auto-detects the pocket.`,
+			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction and add a derived pocket constraint during affinity predictions. That derived constraint remains separate from any explicit pocket constraints in target.constraints. When omitted, the model auto-detects the pocket.`,
 			InnerField: "pocket_residues",
 		},
 		&requestflag.InnerFlag[[]string]{
@@ -254,9 +264,19 @@ var smallMoleculeLibraryScreenStart = requestflag.WithInnerFlags(cli.Command{
 			Usage:      "Protein entities defining the target structure. Each entity represents a protein chain.",
 			InnerField: "entities",
 		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.bonds",
+			Usage:      "Covalent bond constraints between atoms in the target complex. Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "bonds",
+		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.constraints",
+			Usage:      "Structural constraints (pocket and contact). Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "constraints",
+		},
 		&requestflag.InnerFlag[map[string]any]{
 			Name:       "target.pocket-residues",
-			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction. When omitted, the model auto-detects the pocket.`,
+			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction and add a derived pocket constraint during affinity predictions. That derived constraint remains separate from any explicit pocket constraints in target.constraints. When omitted, the model auto-detects the pocket.`,
 			InnerField: "pocket_residues",
 		},
 		&requestflag.InnerFlag[[]string]{
