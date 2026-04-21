@@ -16,7 +16,7 @@ func TestSmallMoleculeLibraryScreenRetrieve(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"small-molecule:library-screen", "retrieve",
-			"--id", "id",
+			"--screen-id", "screen_id",
 			"--workspace-id", "workspace_id",
 		)
 	})
@@ -45,7 +45,7 @@ func TestSmallMoleculeLibraryScreenDeleteData(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"small-molecule:library-screen", "delete-data",
-			"--id", "id",
+			"--screen-id", "screen_id",
 		)
 	})
 }
@@ -164,7 +164,7 @@ func TestSmallMoleculeLibraryScreenListResults(t *testing.T) {
 			"--api-key", "string",
 			"small-molecule:library-screen", "list-results",
 			"--max-items", "10",
-			"--id", "id",
+			"--screen-id", "screen_id",
 			"--after-id", "after_id",
 			"--before-id", "before_id",
 			"--limit", "1",
@@ -286,7 +286,7 @@ func TestSmallMoleculeLibraryScreenStop(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"small-molecule:library-screen", "stop",
-			"--id", "id",
+			"--screen-id", "screen_id",
 		)
 	})
 }

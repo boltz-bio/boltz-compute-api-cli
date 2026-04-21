@@ -20,7 +20,7 @@ var proteinLibraryScreenRetrieve = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "screen-id",
 			Required: true,
 		},
 		&requestflag.Flag[string]{
@@ -74,7 +74,7 @@ var proteinLibraryScreenDeleteData = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "screen-id",
 			Required: true,
 		},
 	},
@@ -133,7 +133,7 @@ var proteinLibraryScreenListResults = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "screen-id",
 			Required: true,
 		},
 		&requestflag.Flag[string]{
@@ -217,7 +217,7 @@ var proteinLibraryScreenStop = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "screen-id",
 			Required: true,
 		},
 	},
@@ -228,8 +228,8 @@ var proteinLibraryScreenStop = cli.Command{
 func handleProteinLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
+		cmd.Set("screen-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -253,7 +253,7 @@ func handleProteinLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) e
 	options = append(options, option.WithResponseBodyInto(&res))
 	_, err = client.Protein.LibraryScreen.Get(
 		ctx,
-		cmd.Value("id").(string),
+		cmd.Value("screen-id").(string),
 		params,
 		options...,
 	)
@@ -332,8 +332,8 @@ func handleProteinLibraryScreenList(ctx context.Context, cmd *cli.Command) error
 func handleProteinLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
+		cmd.Set("screen-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -353,7 +353,7 @@ func handleProteinLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command)
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
-	_, err = client.Protein.LibraryScreen.DeleteData(ctx, cmd.Value("id").(string), options...)
+	_, err = client.Protein.LibraryScreen.DeleteData(ctx, cmd.Value("screen-id").(string), options...)
 	if err != nil {
 		return err
 	}
@@ -415,8 +415,8 @@ func handleProteinLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Comman
 func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
+		cmd.Set("screen-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -444,7 +444,7 @@ func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command
 		options = append(options, option.WithResponseBodyInto(&res))
 		_, err = client.Protein.LibraryScreen.ListResults(
 			ctx,
-			cmd.Value("id").(string),
+			cmd.Value("screen-id").(string),
 			params,
 			options...,
 		)
@@ -462,7 +462,7 @@ func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command
 	} else {
 		iter := client.Protein.LibraryScreen.ListResultsAutoPaging(
 			ctx,
-			cmd.Value("id").(string),
+			cmd.Value("screen-id").(string),
 			params,
 			options...,
 		)
@@ -524,8 +524,8 @@ func handleProteinLibraryScreenStart(ctx context.Context, cmd *cli.Command) erro
 func handleProteinLibraryScreenStop(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
+		cmd.Set("screen-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -545,7 +545,7 @@ func handleProteinLibraryScreenStop(ctx context.Context, cmd *cli.Command) error
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
-	_, err = client.Protein.LibraryScreen.Stop(ctx, cmd.Value("id").(string), options...)
+	_, err = client.Protein.LibraryScreen.Stop(ctx, cmd.Value("screen-id").(string), options...)
 	if err != nil {
 		return err
 	}

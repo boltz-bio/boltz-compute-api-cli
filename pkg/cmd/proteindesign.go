@@ -20,7 +20,7 @@ var proteinDesignRetrieve = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "run-id",
 			Required: true,
 		},
 		&requestflag.Flag[string]{
@@ -74,7 +74,7 @@ var proteinDesignDeleteData = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "run-id",
 			Required: true,
 		},
 	},
@@ -126,7 +126,7 @@ var proteinDesignListResults = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "run-id",
 			Required: true,
 		},
 		&requestflag.Flag[string]{
@@ -203,7 +203,7 @@ var proteinDesignStop = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "run-id",
 			Required: true,
 		},
 	},
@@ -214,8 +214,8 @@ var proteinDesignStop = cli.Command{
 func handleProteinDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
+		cmd.Set("run-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -239,7 +239,7 @@ func handleProteinDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
 	options = append(options, option.WithResponseBodyInto(&res))
 	_, err = client.Protein.Design.Get(
 		ctx,
-		cmd.Value("id").(string),
+		cmd.Value("run-id").(string),
 		params,
 		options...,
 	)
@@ -318,8 +318,8 @@ func handleProteinDesignList(ctx context.Context, cmd *cli.Command) error {
 func handleProteinDesignDeleteData(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
+		cmd.Set("run-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -339,7 +339,7 @@ func handleProteinDesignDeleteData(ctx context.Context, cmd *cli.Command) error 
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
-	_, err = client.Protein.Design.DeleteData(ctx, cmd.Value("id").(string), options...)
+	_, err = client.Protein.Design.DeleteData(ctx, cmd.Value("run-id").(string), options...)
 	if err != nil {
 		return err
 	}
@@ -401,8 +401,8 @@ func handleProteinDesignEstimateCost(ctx context.Context, cmd *cli.Command) erro
 func handleProteinDesignListResults(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
+		cmd.Set("run-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -430,7 +430,7 @@ func handleProteinDesignListResults(ctx context.Context, cmd *cli.Command) error
 		options = append(options, option.WithResponseBodyInto(&res))
 		_, err = client.Protein.Design.ListResults(
 			ctx,
-			cmd.Value("id").(string),
+			cmd.Value("run-id").(string),
 			params,
 			options...,
 		)
@@ -448,7 +448,7 @@ func handleProteinDesignListResults(ctx context.Context, cmd *cli.Command) error
 	} else {
 		iter := client.Protein.Design.ListResultsAutoPaging(
 			ctx,
-			cmd.Value("id").(string),
+			cmd.Value("run-id").(string),
 			params,
 			options...,
 		)
@@ -510,8 +510,8 @@ func handleProteinDesignStart(ctx context.Context, cmd *cli.Command) error {
 func handleProteinDesignStop(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
+		cmd.Set("run-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -531,7 +531,7 @@ func handleProteinDesignStop(ctx context.Context, cmd *cli.Command) error {
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
-	_, err = client.Protein.Design.Stop(ctx, cmd.Value("id").(string), options...)
+	_, err = client.Protein.Design.Stop(ctx, cmd.Value("run-id").(string), options...)
 	if err != nil {
 		return err
 	}

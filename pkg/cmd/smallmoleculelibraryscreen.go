@@ -20,7 +20,7 @@ var smallMoleculeLibraryScreenRetrieve = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "screen-id",
 			Required: true,
 		},
 		&requestflag.Flag[string]{
@@ -74,7 +74,7 @@ var smallMoleculeLibraryScreenDeleteData = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "screen-id",
 			Required: true,
 		},
 	},
@@ -177,7 +177,7 @@ var smallMoleculeLibraryScreenListResults = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "screen-id",
 			Required: true,
 		},
 		&requestflag.Flag[string]{
@@ -305,7 +305,7 @@ var smallMoleculeLibraryScreenStop = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "screen-id",
 			Required: true,
 		},
 	},
@@ -316,8 +316,8 @@ var smallMoleculeLibraryScreenStop = cli.Command{
 func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
+		cmd.Set("screen-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -341,7 +341,7 @@ func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Comm
 	options = append(options, option.WithResponseBodyInto(&res))
 	_, err = client.SmallMolecule.LibraryScreen.Get(
 		ctx,
-		cmd.Value("id").(string),
+		cmd.Value("screen-id").(string),
 		params,
 		options...,
 	)
@@ -420,8 +420,8 @@ func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command)
 func handleSmallMoleculeLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
+		cmd.Set("screen-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -441,7 +441,7 @@ func handleSmallMoleculeLibraryScreenDeleteData(ctx context.Context, cmd *cli.Co
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
-	_, err = client.SmallMolecule.LibraryScreen.DeleteData(ctx, cmd.Value("id").(string), options...)
+	_, err = client.SmallMolecule.LibraryScreen.DeleteData(ctx, cmd.Value("screen-id").(string), options...)
 	if err != nil {
 		return err
 	}
@@ -503,8 +503,8 @@ func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.
 func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
+		cmd.Set("screen-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -532,7 +532,7 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 		options = append(options, option.WithResponseBodyInto(&res))
 		_, err = client.SmallMolecule.LibraryScreen.ListResults(
 			ctx,
-			cmd.Value("id").(string),
+			cmd.Value("screen-id").(string),
 			params,
 			options...,
 		)
@@ -550,7 +550,7 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 	} else {
 		iter := client.SmallMolecule.LibraryScreen.ListResultsAutoPaging(
 			ctx,
-			cmd.Value("id").(string),
+			cmd.Value("screen-id").(string),
 			params,
 			options...,
 		)
@@ -612,8 +612,8 @@ func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command
 func handleSmallMoleculeLibraryScreenStop(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
+		cmd.Set("screen-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -633,7 +633,7 @@ func handleSmallMoleculeLibraryScreenStop(ctx context.Context, cmd *cli.Command)
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
-	_, err = client.SmallMolecule.LibraryScreen.Stop(ctx, cmd.Value("id").(string), options...)
+	_, err = client.SmallMolecule.LibraryScreen.Stop(ctx, cmd.Value("screen-id").(string), options...)
 	if err != nil {
 		return err
 	}

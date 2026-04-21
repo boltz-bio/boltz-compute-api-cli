@@ -20,7 +20,7 @@ var smallMoleculeDesignRetrieve = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "run-id",
 			Required: true,
 		},
 		&requestflag.Flag[string]{
@@ -74,7 +74,7 @@ var smallMoleculeDesignDeleteData = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "run-id",
 			Required: true,
 		},
 	},
@@ -171,7 +171,7 @@ var smallMoleculeDesignListResults = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "run-id",
 			Required: true,
 		},
 		&requestflag.Flag[string]{
@@ -293,7 +293,7 @@ var smallMoleculeDesignStop = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
+			Name:     "run-id",
 			Required: true,
 		},
 	},
@@ -304,8 +304,8 @@ var smallMoleculeDesignStop = cli.Command{
 func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
+		cmd.Set("run-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -329,7 +329,7 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 	options = append(options, option.WithResponseBodyInto(&res))
 	_, err = client.SmallMolecule.Design.Get(
 		ctx,
-		cmd.Value("id").(string),
+		cmd.Value("run-id").(string),
 		params,
 		options...,
 	)
@@ -408,8 +408,8 @@ func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error 
 func handleSmallMoleculeDesignDeleteData(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
+		cmd.Set("run-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -429,7 +429,7 @@ func handleSmallMoleculeDesignDeleteData(ctx context.Context, cmd *cli.Command) 
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
-	_, err = client.SmallMolecule.Design.DeleteData(ctx, cmd.Value("id").(string), options...)
+	_, err = client.SmallMolecule.Design.DeleteData(ctx, cmd.Value("run-id").(string), options...)
 	if err != nil {
 		return err
 	}
@@ -491,8 +491,8 @@ func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command
 func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
+		cmd.Set("run-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -520,7 +520,7 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 		options = append(options, option.WithResponseBodyInto(&res))
 		_, err = client.SmallMolecule.Design.ListResults(
 			ctx,
-			cmd.Value("id").(string),
+			cmd.Value("run-id").(string),
 			params,
 			options...,
 		)
@@ -538,7 +538,7 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 	} else {
 		iter := client.SmallMolecule.Design.ListResultsAutoPaging(
 			ctx,
-			cmd.Value("id").(string),
+			cmd.Value("run-id").(string),
 			params,
 			options...,
 		)
@@ -600,8 +600,8 @@ func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error
 func handleSmallMoleculeDesignStop(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
-	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
-		cmd.Set("id", unusedArgs[0])
+	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
+		cmd.Set("run-id", unusedArgs[0])
 		unusedArgs = unusedArgs[1:]
 	}
 	if len(unusedArgs) > 0 {
@@ -621,7 +621,7 @@ func handleSmallMoleculeDesignStop(ctx context.Context, cmd *cli.Command) error 
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
-	_, err = client.SmallMolecule.Design.Stop(ctx, cmd.Value("id").(string), options...)
+	_, err = client.SmallMolecule.Design.Stop(ctx, cmd.Value("run-id").(string), options...)
 	if err != nil {
 		return err
 	}
