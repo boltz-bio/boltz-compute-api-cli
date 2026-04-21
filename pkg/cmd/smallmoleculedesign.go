@@ -84,7 +84,7 @@ var smallMoleculeDesignDeleteData = cli.Command{
 
 var smallMoleculeDesignEstimateCost = requestflag.WithInnerFlags(cli.Command{
 	Name:    "estimate-cost",
-	Usage:   "Estimate the cost of a small molecule design run without creating any resource\nor consuming GPU.",
+	Usage:   "Estimate the billed cost of a small molecule design run without creating any\nresource or consuming GPU. Includes the SynFlowNet generation charges implied by\nthe scheduler iteration cap plus Boltz2 scoring for each requested molecule.",
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[int64]{

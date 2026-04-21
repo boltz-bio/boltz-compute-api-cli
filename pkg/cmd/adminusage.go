@@ -33,7 +33,7 @@ var adminUsageList = cli.Command{
 		},
 		&requestflag.Flag[string]{
 			Name:      "window-size",
-			Usage:     `Allowed values: "HOUR", "DAY".`,
+			Usage:     "Time window size. HOUR supports up to 31 days per query; DAY supports up to 365 days per query.",
 			Required:  true,
 			QueryPath: "window_size",
 		},
