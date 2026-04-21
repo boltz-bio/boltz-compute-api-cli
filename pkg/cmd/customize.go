@@ -31,6 +31,10 @@ func ApplyCustomizations(app *cli.Command) {
 	if !hasCommand(app.Commands, authCommand.Name) {
 		app.Commands = append(app.Commands, authCommand)
 	}
+
+	if !hasCommand(app.Commands, downloadResultsCommand.Name) {
+		app.Commands = append(app.Commands, downloadResultsCommand)
+	}
 }
 
 func authFlags() []cli.Flag {
