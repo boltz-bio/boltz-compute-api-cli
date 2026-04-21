@@ -13,7 +13,7 @@ import (
 
 const (
 	customizationsAppliedKey = "command_customizations_applied"
-	transformUsage           = "The GJSON transformation for data output. For paginated or streamed list commands, this runs on each item; use --format raw with jq for whole-list reshaping."
+	transformUsage           = "The GJSON transformation for data output. For paginated or streamed list commands, this runs on each emitted item except in --format raw, where it runs on the full response page; use jq for whole-list reshaping."
 )
 
 func ApplyCustomizations(app *cli.Command) {

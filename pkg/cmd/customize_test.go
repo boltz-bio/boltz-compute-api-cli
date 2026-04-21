@@ -50,7 +50,8 @@ func TestTransformUsageMentionsPerItemListBehavior(t *testing.T) {
 	ApplyCustomizations(Command)
 
 	transformFlag := mustFindFlag(t, Command, "transform")
-	require.Contains(t, usageForFlag(t, transformFlag), "runs on each item")
+	require.Contains(t, usageForFlag(t, transformFlag), "runs on each emitted item")
+	require.Contains(t, usageForFlag(t, transformFlag), "--format raw")
 	require.Contains(t, usageForFlag(t, transformFlag), "jq")
 }
 

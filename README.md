@@ -85,7 +85,7 @@ OAuth mode can also be configured with:
 - `--base-url` - Use a custom API backend URL
 - `--format` - Change the output format (`auto`, `explore`, `json`, `jsonl`, `pretty`, `raw`, `yaml`)
 - `--format-error` - Change the output format for errors (`auto`, `explore`, `json`, `jsonl`, `pretty`, `raw`, `yaml`)
-- `--transform` - Transform the data output using [GJSON syntax](https://github.com/tidwall/gjson/blob/master/SYNTAX.md). On paginated or streamed list commands, the transform runs on each item.
+- `--transform` - Transform the data output using [GJSON syntax](https://github.com/tidwall/gjson/blob/master/SYNTAX.md). On paginated or streamed list commands, the transform runs on each item unless you use `--format raw`.
 - `--transform-error` - Transform the error output using [GJSON syntax](https://github.com/tidwall/gjson/blob/master/SYNTAX.md)
 - `--auth-issuer-url` - OIDC issuer URL used for OAuth login and bearer-token refresh
 - `--auth-client-id` - OAuth client ID for public-client login
@@ -254,7 +254,8 @@ Use `--help` on a specific command to see the repeatable flag names it accepts.
 ### Transform behavior
 
 `--transform` applies to the whole response for single-object commands. On
-paginated or streamed list commands, it applies to each emitted item.
+paginated or streamed list commands, it applies to each emitted item unless you
+use `--format raw`, in which case it runs on the full response page.
 
 Examples:
 
@@ -267,7 +268,7 @@ boltz-api small-molecule:library-screen list-results \
 # Whole-list reshaping or aggregation is better handled with jq
 boltz-api small-molecule:library-screen list-results \
   --screen-id sm_scr_123 \
-  --format raw | jq '.data[] | {id, score}'
+  --format raw | jq '.data[] | {id, binding_confidence: .metrics.binding_confidence}'
 ```
 
 Array-root expressions such as `#.{...}` are not the right tool in streamed

@@ -479,6 +479,25 @@ func TestEmbedFilesStructuredIncludeErrors(t *testing.T) {
 	_, err = embedFiles(map[string]any{"input": "@yaml:///does/not/exist.yaml"}, EmbedText, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "failed to read @yaml:///does/not/exist.yaml")
+
+	selfCyclePath := filepath.Join(tmpDir, "self.json")
+	require.NoError(t, os.WriteFile(selfCyclePath, []byte(`{"entities":"@json://`+selfCyclePath+`"}`), 0644))
+
+	_, err = embedFiles(map[string]any{"input": "@json://" + selfCyclePath}, EmbedText, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "structured include cycle detected")
+	require.Contains(t, err.Error(), selfCyclePath)
+
+	firstCyclePath := filepath.Join(tmpDir, "first.json")
+	secondCyclePath := filepath.Join(tmpDir, "second.json")
+	require.NoError(t, os.WriteFile(firstCyclePath, []byte(`{"entities":"@json://`+secondCyclePath+`"}`), 0644))
+	require.NoError(t, os.WriteFile(secondCyclePath, []byte(`{"entities":"@json://`+firstCyclePath+`"}`), 0644))
+
+	_, err = embedFiles(map[string]any{"input": "@json://" + firstCyclePath}, EmbedText, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "structured include cycle detected")
+	require.Contains(t, err.Error(), firstCyclePath)
+	require.Contains(t, err.Error(), secondCyclePath)
 }
 
 func writeTestFile(t *testing.T, dir, filename, content string) {
