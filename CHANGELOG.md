@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 (2026-04-21)
+
+Full Changelog: [v0.2.0...v0.3.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.2.0...v0.3.0)
+
+### Features
+
+* **cli:** add OAuth auth commands and session management ([4a545a7](https://github.com/boltz-bio/boltz-compute-api-cli/commit/4a545a741ace600c9f9dc90b38f9fd415a375bad))
+
 ## 0.2.0 (2026-04-21)
 
 Full Changelog: [v0.1.0...v0.2.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.1.0...v0.2.0)
