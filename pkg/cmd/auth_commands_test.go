@@ -1,0 +1,330 @@
+package cmd
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
+	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli/v3"
+	"github.com/zalando/go-keyring"
+)
+
+func TestAuthWhoAmIReportsOperatorFriendlyIdentityAndSources(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+
+	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
+		IssuerURL:   "https://issuer.example.com",
+		ClientID:    "client-123",
+		Scopes:      []string{"openid", "profile"},
+		Audience:    "aud-123",
+		SelectedOrg: "org-config",
+	}))
+
+	backend, err := authstore.SaveRefreshToken("refresh-token")
+	require.NoError(t, err)
+	require.Equal(t, "file", backend)
+
+	require.NoError(t, authstore.SaveSession(authstore.Session{
+		IssuerURL:      "https://issuer.example.com",
+		ClientID:       "client-123",
+		Audience:       "aud-123",
+		Scopes:         []string{"openid", "profile"},
+		GrantedScopes:  []string{"openid", "profile"},
+		AccessToken:    "access-token",
+		TokenType:      "Bearer",
+		Expiry:         time.Date(2026, 4, 21, 13, 0, 0, 0, time.UTC),
+		StorageBackend: backend,
+		Identity: authstore.Identity{
+			Subject:           "user-123",
+			Email:             "user@example.com",
+			Name:              "Test User",
+			PreferredUsername: "test-user",
+			Claims:            map[string]any{"role": "admin"},
+		},
+	}))
+
+	output, err := runAuthCommand(t, "--format", "json", "auth", "whoami")
+	require.NoError(t, err)
+
+	var response map[string]any
+	require.NoError(t, json.Unmarshal([]byte(output), &response))
+
+	identity, ok := response["identity"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, "user@example.com", identity["email"])
+	require.Equal(t, "Test User", identity["name"])
+	require.NotContains(t, identity, "claims")
+
+	sources, ok := response["sources"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, string(authconfig.SourceConfig), sources["issuer_url"])
+	require.Equal(t, string(authconfig.SourceConfig), sources["client_id"])
+	require.Equal(t, string(authconfig.SourceConfig), sources["selected_org"])
+	require.Equal(t, string(authconfig.SourceSessionCache), sources["session"])
+	require.Equal(t, string(authconfig.SourceFile), sources["refresh_token"])
+}
+
+func TestAuthStatusReportsAPIKeyOverride(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+	t.Setenv("BOLTZ_COMPUTE_API_KEY", "api-key-123")
+
+	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
+		IssuerURL:   "https://issuer.example.com",
+		ClientID:    "client-123",
+		Scopes:      []string{"openid", "profile"},
+		SelectedOrg: "org-config",
+	}))
+	require.NoError(t, authstore.SaveSession(authstore.Session{
+		IssuerURL:     "https://issuer.example.com",
+		ClientID:      "client-123",
+		Scopes:        []string{"openid", "profile"},
+		GrantedScopes: []string{"openid"},
+		AccessToken:   "oauth-access",
+		TokenType:     "Bearer",
+		Expiry:        time.Now().Add(10 * time.Minute),
+		Identity: authstore.Identity{
+			Email: "user@example.com",
+		},
+	}))
+	_, err := authstore.SaveRefreshToken("refresh-token")
+	require.NoError(t, err)
+
+	output, err := runAuthCommand(t, "--format", "json", "auth", "status")
+	require.NoError(t, err)
+
+	var response map[string]any
+	require.NoError(t, json.Unmarshal([]byte(output), &response))
+	require.Equal(t, true, response["authenticated"])
+	require.Equal(t, "api_key", response["effective_mode"])
+	require.Equal(t, "api_key", response["active_source"])
+	require.Equal(t, true, response["api_key_overrides_oauth"])
+	_, hasMissingScopes := response["missing_scopes"]
+	require.False(t, hasMissingScopes)
+	_, hasIdentity := response["identity"]
+	require.False(t, hasIdentity)
+
+	storedOAuthSession, ok := response["stored_oauth_session"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, []any{"profile"}, storedOAuthSession["missing_scopes"])
+
+	warnings, ok := response["warnings"].([]any)
+	require.True(t, ok)
+	require.Contains(t, warnings, "API-key mode is overriding the stored OAuth session.")
+}
+
+func TestAuthStatusSessionMismatchKeepsActiveSourceUnset(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+
+	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
+		IssuerURL: "https://issuer.example.com",
+		ClientID:  "client-456",
+		Scopes:    []string{"openid", "profile"},
+	}))
+	require.NoError(t, authstore.SaveSession(authstore.Session{
+		IssuerURL:     "https://issuer.example.com",
+		ClientID:      "client-123",
+		Scopes:        []string{"openid", "profile"},
+		GrantedScopes: []string{"openid", "profile"},
+		AccessToken:   "oauth-access",
+		TokenType:     "Bearer",
+		Expiry:        time.Now().Add(10 * time.Minute),
+	}))
+
+	root := newAuthTestRoot(os.Stdout)
+	snapshot, err := loadAuthSnapshot(root)
+	require.NoError(t, err)
+
+	response, authenticated := buildAuthStatusResponse(snapshot)
+	require.False(t, authenticated)
+	require.Equal(t, "none", response.EffectiveMode)
+	require.Equal(t, "none", response.ActiveSource)
+	require.NotNil(t, response.StoredOAuthSession)
+	require.Equal(t, []string{"openid", "profile"}, response.StoredOAuthSession.GrantedScopes)
+}
+
+func TestAuthValidateRefreshesExpiredSession(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, r.ParseForm())
+		require.Equal(t, "refresh_token", r.PostForm.Get("grant_type"))
+		require.Equal(t, "refresh-token", r.PostForm.Get("refresh_token"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"new-access","refresh_token":"refresh-token-2","token_type":"Bearer","expires_in":3600,"scope":"openid profile"}`))
+	}))
+	defer server.Close()
+
+	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
+		IssuerURL: "https://issuer.example.com",
+		ClientID:  "client-123",
+		Scopes:    []string{"openid", "profile"},
+	}))
+	require.NoError(t, authstore.SaveSession(authstore.Session{
+		IssuerURL:     "https://issuer.example.com",
+		ClientID:      "client-123",
+		Scopes:        []string{"openid", "profile"},
+		GrantedScopes: []string{"openid"},
+		AccessToken:   "old-access",
+		TokenType:     "Bearer",
+		Expiry:        time.Now().Add(-1 * time.Minute),
+		TokenURL:      server.URL,
+	}))
+	_, err := authstore.SaveRefreshToken("refresh-token")
+	require.NoError(t, err)
+
+	output, err := runAuthCommand(t, "--format", "json", "auth", "validate")
+	require.NoError(t, err)
+
+	var response map[string]any
+	require.NoError(t, json.Unmarshal([]byte(output), &response))
+	require.Equal(t, true, response["valid"])
+	require.Equal(t, true, response["refreshed"])
+	require.Equal(t, "oauth", response["effective_mode"])
+
+	session, err := authstore.LoadSession()
+	require.NoError(t, err)
+	require.NotNil(t, session)
+	require.Equal(t, "new-access", session.AccessToken)
+	require.Equal(t, []string{"openid", "profile"}, session.GrantedScopes)
+}
+
+func TestAuthValidateAPIKeyExplainsLocalOnlyCheck(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+	t.Setenv("BOLTZ_COMPUTE_API_KEY", "api-key-123")
+
+	output, err := runAuthCommand(t, "--format", "json", "auth", "validate")
+	require.NoError(t, err)
+
+	var response map[string]any
+	require.NoError(t, json.Unmarshal([]byte(output), &response))
+	require.Equal(t, true, response["valid"])
+	require.Equal(t, "api_key", response["effective_mode"])
+
+	warnings, ok := response["warnings"].([]any)
+	require.True(t, ok)
+	require.Contains(t, warnings, "API-key validation is local only; this command confirms that an API key is configured.")
+}
+
+func TestAuthLoginDoesNotPersistProfileOnFailure(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+
+	_, err := runAuthCommand(t,
+		"auth", "login",
+		"--no-browser",
+		"--auth-issuer-url", "http://127.0.0.1:1",
+		"--auth-client-id", "client-123",
+	)
+	require.Error(t, err)
+
+	config, loadErr := authconfig.Load()
+	require.NoError(t, loadErr)
+	require.Empty(t, config.IssuerURL)
+	require.Empty(t, config.ClientID)
+}
+
+func runAuthCommand(t *testing.T, args ...string) (string, error) {
+	t.Helper()
+
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = r.Close()
+	})
+
+	root := newAuthTestRoot(w)
+	runErr := root.Run(context.Background(), append([]string{"boltz-api"}, args...))
+	require.NoError(t, w.Close())
+
+	output, readErr := io.ReadAll(r)
+	require.NoError(t, readErr)
+	return string(output), runErr
+}
+
+func newAuthTestRoot(writer *os.File) *cli.Command {
+	root := &cli.Command{
+		Name:      "boltz-api",
+		Writer:    writer,
+		ErrWriter: writer,
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "format", Value: "auto"},
+			&cli.BoolFlag{Name: "raw-output"},
+			&cli.StringFlag{Name: "transform"},
+			&requestflag.Flag[string]{
+				Name:    "api-key",
+				Sources: cli.EnvVars("BOLTZ_COMPUTE_API_KEY"),
+			},
+		},
+		Commands: []*cli.Command{authCommand},
+	}
+	root.Flags = append(root.Flags, authFlags()...)
+	return root
+}
+
+func setAuthCommandUserDirs(t *testing.T) {
+	t.Helper()
+
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("XDG_CONFIG_HOME", home)
+	t.Setenv("XDG_CACHE_HOME", home)
+}
+
+func useFileOnlyKeyringForAuthCommandTests(t *testing.T) {
+	t.Helper()
+
+	authstore.SetKeyringBackend(authCommandTestKeyringBackend{
+		get: func(service, key string) (string, error) {
+			return "", errors.New("keyring unavailable")
+		},
+		set: func(service, key, value string) error {
+			return errors.New("keyring unavailable")
+		},
+		delete: func(service, key string) error {
+			return keyring.ErrNotFound
+		},
+	})
+	t.Cleanup(authstore.ResetKeyring)
+}
+
+type authCommandTestKeyringBackend struct {
+	get    func(service, key string) (string, error)
+	set    func(service, key, value string) error
+	delete func(service, key string) error
+}
+
+func (m authCommandTestKeyringBackend) Get(service, key string) (string, error) {
+	if m.get != nil {
+		return m.get(service, key)
+	}
+	return "", nil
+}
+
+func (m authCommandTestKeyringBackend) Set(service, key, value string) error {
+	if m.set != nil {
+		return m.set(service, key, value)
+	}
+	return nil
+}
+
+func (m authCommandTestKeyringBackend) Delete(service, key string) error {
+	if m.delete != nil {
+		return m.delete(service, key)
+	}
+	return nil
+}

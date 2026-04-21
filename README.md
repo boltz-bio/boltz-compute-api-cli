@@ -10,7 +10,7 @@ It is generated with [Stainless](https://www.stainless.com/).
 
 ### Installing with Go
 
-To test or install the CLI locally, you need [Go](https://go.dev/doc/install) version 1.22 or later installed.
+To test or install the CLI locally, you need [Go](https://go.dev/doc/install) version 1.25 or later installed.
 
 ```sh
 go install 'github.com/boltz-bio/boltz-compute-api-cli/cmd/boltz-api@latest'
@@ -62,6 +62,20 @@ For details about specific commands, use the `--help` flag.
 | ----------------------- | -------- | ------------- |
 | `BOLTZ_COMPUTE_API_KEY` | no       | `null`        |
 
+OAuth mode can also be configured with:
+
+- `BOLTZ_COMPUTE_AUTH_ISSUER_URL`
+- `BOLTZ_COMPUTE_AUTH_CLIENT_ID`
+- `BOLTZ_COMPUTE_AUTH_SCOPE` (comma-separated)
+- `BOLTZ_COMPUTE_AUTH_AUDIENCE`
+- `BOLTZ_COMPUTE_AUTH_AUTHORIZATION_URL`
+- `BOLTZ_COMPUTE_AUTH_TOKEN_URL`
+- `BOLTZ_COMPUTE_AUTH_USERINFO_URL`
+- `BOLTZ_COMPUTE_AUTH_REVOCATION_URL`
+- `BOLTZ_COMPUTE_ORG`
+- `BOLTZ_COMPUTE_NO_BROWSER`
+- `BOLTZ_COMPUTE_LISTEN_PORT`
+
 ### Global flags
 
 - `--api-key` (can also be set with `BOLTZ_COMPUTE_API_KEY` env var)
@@ -73,6 +87,74 @@ For details about specific commands, use the `--help` flag.
 - `--format-error` - Change the output format for errors (`auto`, `explore`, `json`, `jsonl`, `pretty`, `raw`, `yaml`)
 - `--transform` - Transform the data output using [GJSON syntax](https://github.com/tidwall/gjson/blob/master/SYNTAX.md)
 - `--transform-error` - Transform the error output using [GJSON syntax](https://github.com/tidwall/gjson/blob/master/SYNTAX.md)
+- `--auth-issuer-url` - OIDC issuer URL used for OAuth login and bearer-token refresh
+- `--auth-client-id` - OAuth client ID for public-client login
+- `--auth-scope` - OAuth scope to request (repeatable)
+- `--auth-audience` - Optional OAuth audience
+- `--auth-authorization-url` - Override the discovered authorization endpoint
+- `--auth-token-url` - Override the discovered token endpoint
+- `--auth-userinfo-url` - Override the discovered userinfo endpoint
+- `--auth-revocation-url` - Override the discovered revocation endpoint
+- `--org` - Persist or override the local selected organization
+- `--no-browser` - Print the OAuth URL without opening a browser
+- `--listen-port` - Bind the OAuth loopback listener to a specific port
+
+### OAuth authentication
+
+The CLI supports API-key mode and OAuth bearer-token mode. When `--api-key` or
+`BOLTZ_COMPUTE_API_KEY` is present, API-key mode wins. Otherwise the CLI uses a
+stored OAuth session if one matches the configured issuer, client ID, audience,
+and scopes.
+
+Use API-key mode for CI and agent automation. The stored OAuth session is a
+human login flow with local state, refresh, and browser/loopback behavior.
+
+Start a login flow with:
+
+```sh
+boltz-api auth login \
+  --auth-issuer-url 'https://issuer.example.com' \
+  --auth-client-id 'public-client-id'
+```
+
+For remote or headless usage, print the URL instead of opening a browser:
+
+```sh
+boltz-api auth login \
+  --no-browser \
+  --auth-issuer-url 'https://issuer.example.com' \
+  --auth-client-id 'public-client-id'
+```
+
+Available auth commands:
+
+- `boltz-api auth login`
+- `boltz-api auth logout`
+- `boltz-api auth whoami`
+- `boltz-api auth status`
+- `boltz-api auth validate`
+- `boltz-api auth switch-org <org>`
+
+Command roles:
+
+- `auth whoami` - concise local identity and current mode
+- `auth status` - stable machine-readable auth diagnostics without refreshing
+- `auth validate` - local auth check that may refresh an expired OAuth access token
+
+`auth status` and `auth validate` return structured output. They exit with code
+`1` when no usable auth mode is available. `auth status` remains read-only;
+`auth validate` may refresh an expired OAuth access token using the stored
+refresh token. In API-key mode, `auth validate` confirms that an API key is
+configured locally; it does not make a server round-trip.
+
+The CLI stores non-secret auth configuration in:
+
+- `~/.config/boltz-compute/config.yaml`
+- `~/.cache/boltz-compute/session.json`
+
+Refresh tokens are stored in the OS keychain when available, with a fallback to:
+
+- `~/.config/boltz-compute/credentials.json`
 
 ### Passing files as arguments
 
