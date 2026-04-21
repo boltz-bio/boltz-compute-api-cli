@@ -38,7 +38,7 @@ func main() {
 			exitCode = exitErr.ExitCode()
 		}
 
-		var apierr *githubcomboltzbioboltzcomputeapigo.Error
+		var apierr *boltzcompute.Error
 		if errors.As(err, &apierr) {
 			fmt.Fprintf(os.Stderr, "%s %q: %d %s\n", apierr.Request.Method, apierr.Request.URL, apierr.Response.StatusCode, http.StatusText(apierr.Response.StatusCode))
 			format := app.String("format-error")
