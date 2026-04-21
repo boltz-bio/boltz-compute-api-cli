@@ -16,6 +16,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/authmode"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/jsonview"
 	"github.com/boltz-bio/boltz-compute-api-go/option"
 
@@ -45,6 +47,7 @@ func getDefaultRequestOptions(cmd *cli.Command) []option.RequestOption {
 		option.WithHeader("X-Stainless-Package-Version", Version),
 		option.WithHeader("X-Stainless-Runtime", "cli"),
 		option.WithHeader("X-Stainless-CLI-Command", cmd.FullName()),
+		authMiddlewareOption(cmd),
 	}
 	if cmd.IsSet("api-key") {
 		opts = append(opts, option.WithAPIKey(cmd.String("api-key")))
@@ -56,6 +59,32 @@ func getDefaultRequestOptions(cmd *cli.Command) []option.RequestOption {
 	}
 
 	return opts
+}
+
+func authMiddlewareOption(cmd *cli.Command) option.RequestOption {
+	root := cmd.Root()
+	if root == nil {
+		root = cmd
+	}
+
+	return option.WithMiddleware(func(r *http.Request, mn option.MiddlewareNext) (*http.Response, error) {
+		resolved, err := authconfig.Resolve(root)
+		if err != nil {
+			return nil, authmode.WrapConfigError(err)
+		}
+
+		auth, err := authmode.Resolve(r.Context(), resolved)
+		if err != nil {
+			return nil, err
+		}
+
+		if auth.Mode == authmode.ModeOAuth {
+			r.Header.Del("x-api-key")
+			r.Header.Set("Authorization", "Bearer "+auth.AccessToken)
+		}
+
+		return mn(r)
+	})
 }
 
 var debugMiddlewareOption = option.WithMiddleware(

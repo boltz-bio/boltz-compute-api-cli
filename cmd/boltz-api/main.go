@@ -10,6 +10,7 @@ import (
 	"os"
 	"slices"
 
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/autherror"
 	"github.com/boltz-bio/boltz-compute-api-cli/pkg/cmd"
 	"github.com/boltz-bio/boltz-compute-api-go"
 	"github.com/tidwall/gjson"
@@ -18,6 +19,7 @@ import (
 
 func main() {
 	app := cmd.Command
+	cmd.ApplyCustomizations(app)
 
 	if slices.Contains(os.Args, "__complete") {
 		prepareForAutocomplete(app)
@@ -54,9 +56,22 @@ func main() {
 				fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 			}
 		} else {
-			if cmd.CommandErrorBuffer.Len() > 0 {
+			var authErr *autherror.Error
+			if errors.As(err, &authErr) {
+				format := app.String("format-error")
+				json := gjson.Parse(authErr.RawJSON())
+				showErr := cmd.ShowJSON(json, cmd.ShowJSONOpts{
+					ExplicitFormat: app.IsSet("format-error"),
+					Format:         format,
+					Title:          "Error",
+					Transform:      app.String("transform-error"),
+				})
+				if showErr != nil {
+					fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+				}
+			} else if cmd.CommandErrorBuffer.Len() > 0 {
 				os.Stderr.Write(cmd.CommandErrorBuffer.Bytes())
-			} else {
+			} else if err.Error() != "" {
 				fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 			}
 		}

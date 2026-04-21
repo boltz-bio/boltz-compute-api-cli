@@ -1,0 +1,277 @@
+package authconfig
+
+import (
+	"errors"
+	"os"
+	"slices"
+	"strings"
+
+	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
+	"github.com/urfave/cli/v3"
+	"gopkg.in/yaml.v3"
+)
+
+const (
+	ConfigVersion           = 1
+	EnvAuthIssuerURL        = "BOLTZ_COMPUTE_AUTH_ISSUER_URL"
+	EnvAuthClientID         = "BOLTZ_COMPUTE_AUTH_CLIENT_ID"
+	EnvAuthScope            = "BOLTZ_COMPUTE_AUTH_SCOPE"
+	EnvAuthAudience         = "BOLTZ_COMPUTE_AUTH_AUDIENCE"
+	EnvAuthAuthorizationURL = "BOLTZ_COMPUTE_AUTH_AUTHORIZATION_URL"
+	EnvAuthTokenURL         = "BOLTZ_COMPUTE_AUTH_TOKEN_URL"
+	EnvAuthUserInfoURL      = "BOLTZ_COMPUTE_AUTH_USERINFO_URL"
+	EnvAuthRevocationURL    = "BOLTZ_COMPUTE_AUTH_REVOCATION_URL"
+	EnvOrg                  = "BOLTZ_COMPUTE_ORG"
+	EnvNoBrowser            = "BOLTZ_COMPUTE_NO_BROWSER"
+	EnvListenPort           = "BOLTZ_COMPUTE_LISTEN_PORT"
+)
+
+var DefaultScopes = []string{"openid", "offline_access", "profile", "email"}
+
+type Source string
+
+const (
+	SourceUnset        Source = "unset"
+	SourceRuntime      Source = "runtime"
+	SourceConfig       Source = "config"
+	SourceDefault      Source = "default"
+	SourceSessionCache Source = "session_cache"
+	SourceKeyring      Source = "keyring"
+	SourceFile         Source = "file"
+)
+
+type FileConfig struct {
+	Version          int      `yaml:"version,omitempty"`
+	IssuerURL        string   `yaml:"issuer_url,omitempty"`
+	ClientID         string   `yaml:"client_id,omitempty"`
+	Scopes           []string `yaml:"scopes,omitempty"`
+	Audience         string   `yaml:"audience,omitempty"`
+	AuthorizationURL string   `yaml:"authorization_url,omitempty"`
+	TokenURL         string   `yaml:"token_url,omitempty"`
+	UserInfoURL      string   `yaml:"userinfo_url,omitempty"`
+	RevocationURL    string   `yaml:"revocation_url,omitempty"`
+	SelectedOrg      string   `yaml:"selected_org,omitempty"`
+}
+
+type Resolved struct {
+	APIKey           string
+	IssuerURL        string
+	ClientID         string
+	Scopes           []string
+	Audience         string
+	AuthorizationURL string
+	TokenURL         string
+	UserInfoURL      string
+	RevocationURL    string
+	SelectedOrg      string
+	NoBrowser        bool
+	ListenPort       int
+	Sources          Sources
+}
+
+type Sources struct {
+	APIKey           Source
+	IssuerURL        Source
+	ClientID         Source
+	Scopes           Source
+	Audience         Source
+	AuthorizationURL Source
+	TokenURL         Source
+	UserInfoURL      Source
+	RevocationURL    Source
+	SelectedOrg      Source
+	NoBrowser        Source
+	ListenPort       Source
+}
+
+func Load() (FileConfig, error) {
+	path, err := authstore.ConfigFilePath()
+	if err != nil {
+		return FileConfig{}, err
+	}
+	body, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return FileConfig{}, nil
+	}
+	if err != nil {
+		return FileConfig{}, err
+	}
+
+	var config FileConfig
+	if err := yaml.Unmarshal(body, &config); err != nil {
+		return FileConfig{}, err
+	}
+	config.Scopes = normalizeScopes(config.Scopes)
+	return config, nil
+}
+
+func Resolve(cmd *cli.Command) (Resolved, error) {
+	root := cmd.Root()
+	if root == nil {
+		root = cmd
+	}
+
+	config, err := Load()
+	if err != nil {
+		return Resolved{}, err
+	}
+
+	apiKey, apiKeySource := resolveAPIKey(root)
+	issuerURL, issuerSource := resolveString(root, config.IssuerURL, "auth-issuer-url")
+	clientID, clientIDSource := resolveString(root, config.ClientID, "auth-client-id")
+	scopes, scopesSource := resolveScopes(root, config.Scopes)
+	audience, audienceSource := resolveString(root, config.Audience, "auth-audience")
+	authorizationURL, authorizationSource := resolveString(root, config.AuthorizationURL, "auth-authorization-url")
+	tokenURL, tokenURLSource := resolveString(root, config.TokenURL, "auth-token-url")
+	userInfoURL, userInfoURLSource := resolveString(root, config.UserInfoURL, "auth-userinfo-url")
+	revocationURL, revocationSource := resolveString(root, config.RevocationURL, "auth-revocation-url")
+	selectedOrg, selectedOrgSource := resolveString(root, config.SelectedOrg, "org")
+	noBrowser, noBrowserSource := resolveBool(root, false, "no-browser")
+	listenPort, listenPortSource := resolveInt(root, 0, "listen-port")
+
+	return Resolved{
+		APIKey:           apiKey,
+		IssuerURL:        issuerURL,
+		ClientID:         clientID,
+		Scopes:           scopes,
+		Audience:         audience,
+		AuthorizationURL: authorizationURL,
+		TokenURL:         tokenURL,
+		UserInfoURL:      userInfoURL,
+		RevocationURL:    revocationURL,
+		SelectedOrg:      selectedOrg,
+		NoBrowser:        noBrowser,
+		ListenPort:       listenPort,
+		Sources: Sources{
+			APIKey:           apiKeySource,
+			IssuerURL:        issuerSource,
+			ClientID:         clientIDSource,
+			Scopes:           scopesSource,
+			Audience:         audienceSource,
+			AuthorizationURL: authorizationSource,
+			TokenURL:         tokenURLSource,
+			UserInfoURL:      userInfoURLSource,
+			RevocationURL:    revocationSource,
+			SelectedOrg:      selectedOrgSource,
+			NoBrowser:        noBrowserSource,
+			ListenPort:       listenPortSource,
+		},
+	}, nil
+}
+
+func SaveProfile(resolved Resolved) error {
+	config := FileConfig{
+		Version:          ConfigVersion,
+		IssuerURL:        strings.TrimSpace(resolved.IssuerURL),
+		ClientID:         strings.TrimSpace(resolved.ClientID),
+		Scopes:           normalizeScopes(resolved.Scopes),
+		Audience:         strings.TrimSpace(resolved.Audience),
+		AuthorizationURL: strings.TrimSpace(resolved.AuthorizationURL),
+		TokenURL:         strings.TrimSpace(resolved.TokenURL),
+		UserInfoURL:      strings.TrimSpace(resolved.UserInfoURL),
+		RevocationURL:    strings.TrimSpace(resolved.RevocationURL),
+		SelectedOrg:      strings.TrimSpace(resolved.SelectedOrg),
+	}
+	return save(config)
+}
+
+func SaveSelectedOrg(org string) error {
+	config, err := Load()
+	if err != nil {
+		return err
+	}
+	config.SelectedOrg = strings.TrimSpace(org)
+	return save(config)
+}
+
+func save(config FileConfig) error {
+	config.Version = ConfigVersion
+	config.Scopes = normalizeScopes(config.Scopes)
+
+	path, err := authstore.ConfigFilePath()
+	if err != nil {
+		return err
+	}
+	body, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+	return authstore.WriteFileAtomically(path, body, 0o600)
+}
+
+func resolveAPIKey(root *cli.Command) (string, Source) {
+	value := strings.TrimSpace(root.String("api-key"))
+	if root.IsSet("api-key") && value != "" {
+		return value, SourceRuntime
+	}
+	if value != "" {
+		return value, SourceRuntime
+	}
+	return "", SourceUnset
+}
+
+func resolveString(root *cli.Command, fallback string, name string) (string, Source) {
+	if root.IsSet(name) {
+		return strings.TrimSpace(root.String(name)), SourceRuntime
+	}
+	value := strings.TrimSpace(fallback)
+	if value != "" {
+		return value, SourceConfig
+	}
+	return "", SourceUnset
+}
+
+func resolveBool(root *cli.Command, fallback bool, name string) (bool, Source) {
+	if root.IsSet(name) {
+		return root.Bool(name), SourceRuntime
+	}
+	return fallback, SourceDefault
+}
+
+func resolveInt(root *cli.Command, fallback int, name string) (int, Source) {
+	if root.IsSet(name) {
+		return root.Int(name), SourceRuntime
+	}
+	return fallback, SourceDefault
+}
+
+func resolveScopes(root *cli.Command, fallback []string) ([]string, Source) {
+	if root.IsSet("auth-scope") {
+		scopes := normalizeScopes(root.StringSlice("auth-scope"))
+		if len(scopes) > 0 {
+			return scopes, SourceRuntime
+		}
+	}
+
+	scopes := normalizeScopes(fallback)
+	if len(scopes) > 0 {
+		return scopes, SourceConfig
+	}
+	return slices.Clone(DefaultScopes), SourceDefault
+}
+
+func normalizeScopes(scopes []string) []string {
+	if len(scopes) == 0 {
+		return nil
+	}
+
+	result := make([]string, 0, len(scopes))
+	seen := make(map[string]struct{}, len(scopes))
+	for _, raw := range scopes {
+		for _, part := range strings.Split(raw, ",") {
+			scope := strings.TrimSpace(part)
+			if scope == "" {
+				continue
+			}
+			if _, ok := seen[scope]; ok {
+				continue
+			}
+			seen[scope] = struct{}{}
+			result = append(result, scope)
+		}
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
