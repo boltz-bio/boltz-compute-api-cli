@@ -136,9 +136,19 @@ var smallMoleculeLibraryScreenEstimateCost = requestflag.WithInnerFlags(cli.Comm
 			Usage:      "Protein entities defining the target structure. Each entity represents a protein chain.",
 			InnerField: "entities",
 		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.bonds",
+			Usage:      "Covalent bond constraints between atoms in the target complex. Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "bonds",
+		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.constraints",
+			Usage:      "Structural constraints (pocket and contact). Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "constraints",
+		},
 		&requestflag.InnerFlag[map[string]any]{
 			Name:       "target.pocket-residues",
-			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction. When omitted, the model auto-detects the pocket.`,
+			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction and add a derived pocket constraint during affinity predictions. That derived constraint remains separate from any explicit pocket constraints in target.constraints. When omitted, the model auto-detects the pocket.`,
 			InnerField: "pocket_residues",
 		},
 		&requestflag.InnerFlag[[]string]{
@@ -254,9 +264,19 @@ var smallMoleculeLibraryScreenStart = requestflag.WithInnerFlags(cli.Command{
 			Usage:      "Protein entities defining the target structure. Each entity represents a protein chain.",
 			InnerField: "entities",
 		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.bonds",
+			Usage:      "Covalent bond constraints between atoms in the target complex. Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "bonds",
+		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.constraints",
+			Usage:      "Structural constraints (pocket and contact). Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "constraints",
+		},
 		&requestflag.InnerFlag[map[string]any]{
 			Name:       "target.pocket-residues",
-			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction. When omitted, the model auto-detects the pocket.`,
+			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction and add a derived pocket constraint during affinity predictions. That derived constraint remains separate from any explicit pocket constraints in target.constraints. When omitted, the model auto-detects the pocket.`,
 			InnerField: "pocket_residues",
 		},
 		&requestflag.InnerFlag[[]string]{
@@ -294,7 +314,7 @@ var smallMoleculeLibraryScreenStop = cli.Command{
 }
 
 func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])
@@ -304,7 +324,7 @@ func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Comm
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenGetParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenGetParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -343,14 +363,14 @@ func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Comm
 }
 
 func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenListParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenListParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -398,7 +418,7 @@ func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command)
 }
 
 func handleSmallMoleculeLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])
@@ -440,14 +460,14 @@ func handleSmallMoleculeLibraryScreenDeleteData(ctx context.Context, cmd *cli.Co
 }
 
 func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenEstimateCostParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenEstimateCostParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -481,7 +501,7 @@ func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.
 }
 
 func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])
@@ -491,7 +511,7 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenListResultsParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenListResultsParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -549,14 +569,14 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 }
 
 func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeLibraryScreenStartParams{}
+	params := boltzcompute.SmallMoleculeLibraryScreenStartParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -590,7 +610,7 @@ func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command
 }
 
 func handleSmallMoleculeLibraryScreenStop(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])

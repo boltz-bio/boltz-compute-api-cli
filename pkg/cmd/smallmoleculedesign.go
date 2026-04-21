@@ -84,7 +84,7 @@ var smallMoleculeDesignDeleteData = cli.Command{
 
 var smallMoleculeDesignEstimateCost = requestflag.WithInnerFlags(cli.Command{
 	Name:    "estimate-cost",
-	Usage:   "Estimate the cost of a small molecule design run without creating any resource\nor consuming GPU.",
+	Usage:   "Estimate the billed cost of a small molecule design run without creating any\nresource or consuming GPU. Includes the SynFlowNet generation charges implied by\nthe scheduler iteration cap plus Boltz2 scoring for each requested molecule.",
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[int64]{
@@ -130,9 +130,19 @@ var smallMoleculeDesignEstimateCost = requestflag.WithInnerFlags(cli.Command{
 			Usage:      "Protein entities defining the target structure. Each entity represents a protein chain.",
 			InnerField: "entities",
 		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.bonds",
+			Usage:      "Covalent bond constraints between atoms in the target complex. Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "bonds",
+		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.constraints",
+			Usage:      "Structural constraints (pocket and contact). Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "constraints",
+		},
 		&requestflag.InnerFlag[map[string]any]{
 			Name:       "target.pocket-residues",
-			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction. When omitted, the model auto-detects the pocket.`,
+			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction and add a derived pocket constraint during affinity predictions. That derived constraint remains separate from any explicit pocket constraints in target.constraints. When omitted, the model auto-detects the pocket.`,
 			InnerField: "pocket_residues",
 		},
 		&requestflag.InnerFlag[[]string]{
@@ -242,9 +252,19 @@ var smallMoleculeDesignStart = requestflag.WithInnerFlags(cli.Command{
 			Usage:      "Protein entities defining the target structure. Each entity represents a protein chain.",
 			InnerField: "entities",
 		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.bonds",
+			Usage:      "Covalent bond constraints between atoms in the target complex. Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "bonds",
+		},
+		&requestflag.InnerFlag[[]map[string]any]{
+			Name:       "target.constraints",
+			Usage:      "Structural constraints (pocket and contact). Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
+			InnerField: "constraints",
+		},
 		&requestflag.InnerFlag[map[string]any]{
 			Name:       "target.pocket-residues",
-			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction. When omitted, the model auto-detects the pocket.`,
+			Usage:      `Binding pocket residues, keyed by chain ID. Each key is a chain ID (e.g. "A") and the value is an array of 0-indexed residue indices that define the binding pocket on that chain. When provided, these residues guide pocket extraction and add a derived pocket constraint during affinity predictions. That derived constraint remains separate from any explicit pocket constraints in target.constraints. When omitted, the model auto-detects the pocket.`,
 			InnerField: "pocket_residues",
 		},
 		&requestflag.InnerFlag[[]string]{
@@ -282,7 +302,7 @@ var smallMoleculeDesignStop = cli.Command{
 }
 
 func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])
@@ -292,7 +312,7 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignGetParams{}
+	params := boltzcompute.SmallMoleculeDesignGetParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -331,14 +351,14 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 }
 
 func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignListParams{}
+	params := boltzcompute.SmallMoleculeDesignListParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -386,7 +406,7 @@ func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error 
 }
 
 func handleSmallMoleculeDesignDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])
@@ -428,14 +448,14 @@ func handleSmallMoleculeDesignDeleteData(ctx context.Context, cmd *cli.Command) 
 }
 
 func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignEstimateCostParams{}
+	params := boltzcompute.SmallMoleculeDesignEstimateCostParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -469,7 +489,7 @@ func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command
 }
 
 func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])
@@ -479,7 +499,7 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignListResultsParams{}
+	params := boltzcompute.SmallMoleculeDesignListResultsParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -537,14 +557,14 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 }
 
 func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.SmallMoleculeDesignStartParams{}
+	params := boltzcompute.SmallMoleculeDesignStartParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -578,7 +598,7 @@ func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error
 }
 
 func handleSmallMoleculeDesignStop(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("run-id") && len(unusedArgs) > 0 {
 		cmd.Set("run-id", unusedArgs[0])

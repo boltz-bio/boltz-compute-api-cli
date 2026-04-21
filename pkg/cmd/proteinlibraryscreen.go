@@ -226,7 +226,7 @@ var proteinLibraryScreenStop = cli.Command{
 }
 
 func handleProteinLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])
@@ -236,7 +236,7 @@ func handleProteinLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) e
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinLibraryScreenGetParams{}
+	params := boltzcompute.ProteinLibraryScreenGetParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -275,14 +275,14 @@ func handleProteinLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) e
 }
 
 func handleProteinLibraryScreenList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinLibraryScreenListParams{}
+	params := boltzcompute.ProteinLibraryScreenListParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -330,7 +330,7 @@ func handleProteinLibraryScreenList(ctx context.Context, cmd *cli.Command) error
 }
 
 func handleProteinLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])
@@ -372,14 +372,14 @@ func handleProteinLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command)
 }
 
 func handleProteinLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinLibraryScreenEstimateCostParams{}
+	params := boltzcompute.ProteinLibraryScreenEstimateCostParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -413,7 +413,7 @@ func handleProteinLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Comman
 }
 
 func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])
@@ -423,7 +423,7 @@ func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinLibraryScreenListResultsParams{}
+	params := boltzcompute.ProteinLibraryScreenListResultsParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -481,14 +481,14 @@ func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command
 }
 
 func handleProteinLibraryScreenStart(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.ProteinLibraryScreenStartParams{}
+	params := boltzcompute.ProteinLibraryScreenStartParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -522,7 +522,7 @@ func handleProteinLibraryScreenStart(ctx context.Context, cmd *cli.Command) erro
 }
 
 func handleProteinLibraryScreenStop(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("screen-id") && len(unusedArgs) > 0 {
 		cmd.Set("screen-id", unusedArgs[0])

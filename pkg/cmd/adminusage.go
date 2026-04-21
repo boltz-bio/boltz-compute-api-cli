@@ -33,7 +33,7 @@ var adminUsageList = cli.Command{
 		},
 		&requestflag.Flag[string]{
 			Name:      "window-size",
-			Usage:     `Allowed values: "HOUR", "DAY".`,
+			Usage:     "Time window size. HOUR supports up to 31 days per query; DAY supports up to 365 days per query.",
 			Required:  true,
 			QueryPath: "window_size",
 		},
@@ -73,14 +73,14 @@ var adminUsageList = cli.Command{
 }
 
 func handleAdminUsageList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.AdminUsageListParams{}
+	params := boltzcompute.AdminUsageListParams{}
 
 	options, err := flagOptions(
 		cmd,

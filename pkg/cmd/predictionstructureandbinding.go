@@ -125,12 +125,12 @@ var predictionsStructureAndBindingEstimateCost = requestflag.WithInnerFlags(cli.
 		},
 		&requestflag.InnerFlag[[]map[string]any]{
 			Name:       "input.bonds",
-			Usage:      "Bond constraints between atoms",
+			Usage:      "Bond constraints between atoms. Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
 			InnerField: "bonds",
 		},
 		&requestflag.InnerFlag[[]map[string]any]{
 			Name:       "input.constraints",
-			Usage:      "Structural constraints (pocket and contact)",
+			Usage:      "Structural constraints (pocket and contact). Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
 			InnerField: "constraints",
 		},
 		&requestflag.InnerFlag[map[string]any]{
@@ -188,12 +188,12 @@ var predictionsStructureAndBindingStart = requestflag.WithInnerFlags(cli.Command
 		},
 		&requestflag.InnerFlag[[]map[string]any]{
 			Name:       "input.bonds",
-			Usage:      "Bond constraints between atoms",
+			Usage:      "Bond constraints between atoms. Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
 			InnerField: "bonds",
 		},
 		&requestflag.InnerFlag[[]map[string]any]{
 			Name:       "input.constraints",
-			Usage:      "Structural constraints (pocket and contact)",
+			Usage:      "Structural constraints (pocket and contact). Atom-level ligand references currently support ligand_ccd only; ligand_smiles is unsupported.",
 			InnerField: "constraints",
 		},
 		&requestflag.InnerFlag[map[string]any]{
@@ -209,7 +209,7 @@ var predictionsStructureAndBindingStart = requestflag.WithInnerFlags(cli.Command
 })
 
 func handlePredictionsStructureAndBindingRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -219,7 +219,7 @@ func handlePredictionsStructureAndBindingRetrieve(ctx context.Context, cmd *cli.
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.PredictionStructureAndBindingGetParams{}
+	params := boltzcompute.PredictionStructureAndBindingGetParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -258,14 +258,14 @@ func handlePredictionsStructureAndBindingRetrieve(ctx context.Context, cmd *cli.
 }
 
 func handlePredictionsStructureAndBindingList(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.PredictionStructureAndBindingListParams{}
+	params := boltzcompute.PredictionStructureAndBindingListParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -313,7 +313,7 @@ func handlePredictionsStructureAndBindingList(ctx context.Context, cmd *cli.Comm
 }
 
 func handlePredictionsStructureAndBindingDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -355,14 +355,14 @@ func handlePredictionsStructureAndBindingDeleteData(ctx context.Context, cmd *cl
 }
 
 func handlePredictionsStructureAndBindingEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.PredictionStructureAndBindingEstimateCostParams{}
+	params := boltzcompute.PredictionStructureAndBindingEstimateCostParams{}
 
 	options, err := flagOptions(
 		cmd,
@@ -396,14 +396,14 @@ func handlePredictionsStructureAndBindingEstimateCost(ctx context.Context, cmd *
 }
 
 func handlePredictionsStructureAndBindingStart(ctx context.Context, cmd *cli.Command) error {
-	client := githubcomboltzbioboltzcomputeapigo.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := githubcomboltzbioboltzcomputeapigo.PredictionStructureAndBindingStartParams{}
+	params := boltzcompute.PredictionStructureAndBindingStartParams{}
 
 	options, err := flagOptions(
 		cmd,
