@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 (2026-04-22)
+
+Full Changelog: [v0.5.4...v0.6.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.5.4...v0.6.0)
+
+### Features
+
+* **auth:** align OAuth login with Boltz provider ([504fd08](https://github.com/boltz-bio/boltz-compute-api-cli/commit/504fd0899a5da4d011978e20f89213c19f68464f))
+
 ## 0.5.4 (2026-04-22)
 
 Full Changelog: [v0.5.3...v0.5.4](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.5.3...v0.5.4)
