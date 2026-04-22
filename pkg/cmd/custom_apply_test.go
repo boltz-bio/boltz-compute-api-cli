@@ -11,23 +11,23 @@ import (
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
 )
 
-func TestApplyCustomizationsAddsUniversalIDAlias(t *testing.T) {
+func TestApplyCustomizationsPreservesNativeIDFlags(t *testing.T) {
 	t.Parallel()
 
 	ApplyCustomizations(Command)
 
 	for _, tc := range []struct {
-		path     []string
-		flagName string
+		path []string
 	}{
-		{[]string{"small-molecule:design", "retrieve"}, "run-id"},
-		{[]string{"small-molecule:library-screen", "list-results"}, "screen-id"},
-		{[]string{"protein:design", "stop"}, "run-id"},
-		{[]string{"protein:library-screen", "delete-data"}, "screen-id"},
+		{[]string{"small-molecule:design", "retrieve"}},
+		{[]string{"small-molecule:library-screen", "list-results"}},
+		{[]string{"protein:design", "stop"}},
+		{[]string{"protein:library-screen", "delete-data"}},
 	} {
 		cmd := mustFindCommand(t, Command, tc.path...)
-		flag := mustFindFlag(t, cmd, tc.flagName)
-		require.Contains(t, flag.Names(), "id")
+		mustFindFlag(t, cmd, "id")
+		require.Nil(t, findFlag(cmd, "run-id"))
+		require.Nil(t, findFlag(cmd, "screen-id"))
 	}
 }
 
@@ -134,12 +134,20 @@ func mustFindCommand(t *testing.T, root *cli.Command, path ...string) *cli.Comma
 func mustFindFlag(t *testing.T, cmd *cli.Command, name string) cli.Flag {
 	t.Helper()
 
+	flag := findFlag(cmd, name)
+	if flag != nil {
+		return flag
+	}
+	t.Fatalf("flag %q not found on command %q", name, cmd.Name)
+	return nil
+}
+
+func findFlag(cmd *cli.Command, name string) cli.Flag {
 	for _, flag := range cmd.Flags {
 		if len(flag.Names()) > 0 && flag.Names()[0] == name {
 			return flag
 		}
 	}
-	t.Fatalf("flag %q not found on command %q", name, cmd.Name)
 	return nil
 }
 

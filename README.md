@@ -277,12 +277,12 @@ Examples:
 ```bash
 # Per-item extraction on list output
 boltz-api small-molecule:library-screen list-results \
-  --screen-id sm_scr_123 \
+  --id sm_scr_123 \
   --transform 'input_molecule.id'
 
 # Whole-list reshaping or aggregation is better handled with jq
 boltz-api small-molecule:library-screen list-results \
-  --screen-id sm_scr_123 \
+  --id sm_scr_123 \
   --format raw | jq '.data[] | {id, binding_confidence: .metrics.binding_confidence}'
 ```
 

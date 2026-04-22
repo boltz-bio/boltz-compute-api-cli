@@ -72,7 +72,7 @@ func TestStructuredIncludeObjectFlagSubprocess(t *testing.T) {
 	require.Equal(t, "SEQ", entity["value"])
 }
 
-func TestUniversalIDAliasParsesOnRetrieveCommands(t *testing.T) {
+func TestNativeIDFlagParsesOnRetrieveCommands(t *testing.T) {
 	binary := buildCLIBinary(t)
 	env := authProcessEnv(t)
 
@@ -98,4 +98,29 @@ func TestUniversalIDAliasParsesOnRetrieveCommands(t *testing.T) {
 	require.NotEmpty(t, requestPath)
 	require.Contains(t, requestPath, "run_123")
 	require.NotContains(t, result.Stderr, "flag provided but not defined")
+}
+
+func TestLegacyRunAndScreenIDFlagsAreRejected(t *testing.T) {
+	binary := buildCLIBinary(t)
+	env := authProcessEnv(t)
+
+	runIDResult := runCLI(
+		t,
+		binary,
+		env,
+		"small-molecule:design", "retrieve",
+		"--run-id", "run_123",
+	)
+	require.NotEqual(t, 0, runIDResult.ExitCode)
+	require.Contains(t, runIDResult.Stderr, "flag provided but not defined")
+
+	screenIDResult := runCLI(
+		t,
+		binary,
+		env,
+		"small-molecule:library-screen", "list-results",
+		"--screen-id", "sm_scr_123",
+	)
+	require.NotEqual(t, 0, screenIDResult.ExitCode)
+	require.Contains(t, screenIDResult.Stderr, "flag provided but not defined")
 }
