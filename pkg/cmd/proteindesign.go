@@ -95,7 +95,7 @@ var proteinDesignEstimateCost = cli.Command{
 		},
 		&requestflag.Flag[int64]{
 			Name:     "num-proteins",
-			Usage:    "Number of protein designs to generate",
+			Usage:    "Number of protein designs to generate. Must be between 10 and 1,000,000.",
 			Required: true,
 			BodyPath: "num_proteins",
 		},
@@ -172,7 +172,7 @@ var proteinDesignStart = cli.Command{
 		},
 		&requestflag.Flag[int64]{
 			Name:     "num-proteins",
-			Usage:    "Number of protein designs to generate",
+			Usage:    "Number of protein designs to generate. Must be between 10 and 1,000,000.",
 			Required: true,
 			BodyPath: "num_proteins",
 		},

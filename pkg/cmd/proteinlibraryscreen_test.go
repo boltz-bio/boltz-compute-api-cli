@@ -57,7 +57,7 @@ func TestProteinLibraryScreenEstimateCost(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:library-screen", "estimate-cost",
-			"--protein", "{entities: [{chain_ids: [string], modifications: [{residue_index: 0, type: ccd, value: value}], type: protein, value: value, cyclic: true}], id: id}",
+			"--protein", "{entities: [{chain_ids: [string], type: protein, value: value, cyclic: true, modifications: [{residue_index: 0, type: ccd, value: value}]}], id: id}",
 			"--target", "{chain_selection: {A: {chain_type: polymer, crop_residues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], epitope_residues: [10, 11, 12], flexible_residues: [5, 6, 7]}}, structure: {type: url, url: https://example.com}, type: structure_template}",
 			"--idempotency-key", "idempotency_key",
 			"--workspace-id", "workspace_id",
@@ -73,7 +73,7 @@ func TestProteinLibraryScreenEstimateCost(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:library-screen", "estimate-cost",
-			"--protein.entities", "[{chain_ids: [string], modifications: [{residue_index: 0, type: ccd, value: value}], type: protein, value: value, cyclic: true}]",
+			"--protein.entities", "[{chain_ids: [string], type: protein, value: value, cyclic: true, modifications: [{residue_index: 0, type: ccd, value: value}]}]",
 			"--protein.id", "id",
 			"--target", "{chain_selection: {A: {chain_type: polymer, crop_residues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], epitope_residues: [10, 11, 12], flexible_residues: [5, 6, 7]}}, structure: {type: url, url: https://example.com}, type: structure_template}",
 			"--idempotency-key", "idempotency_key",
@@ -88,13 +88,13 @@ func TestProteinLibraryScreenEstimateCost(t *testing.T) {
 			"  - entities:\n" +
 			"      - chain_ids:\n" +
 			"          - string\n" +
+			"        type: protein\n" +
+			"        value: value\n" +
+			"        cyclic: true\n" +
 			"        modifications:\n" +
 			"          - residue_index: 0\n" +
 			"            type: ccd\n" +
 			"            value: value\n" +
-			"        type: protein\n" +
-			"        value: value\n" +
-			"        cyclic: true\n" +
 			"    id: id\n" +
 			"target:\n" +
 			"  chain_selection:\n" +
@@ -160,7 +160,7 @@ func TestProteinLibraryScreenStart(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:library-screen", "start",
-			"--protein", "{entities: [{chain_ids: [string], modifications: [{residue_index: 0, type: ccd, value: value}], type: protein, value: value, cyclic: true}], id: id}",
+			"--protein", "{entities: [{chain_ids: [string], type: protein, value: value, cyclic: true, modifications: [{residue_index: 0, type: ccd, value: value}]}], id: id}",
 			"--target", "{chain_selection: {A: {chain_type: polymer, crop_residues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], epitope_residues: [10, 11, 12], flexible_residues: [5, 6, 7]}}, structure: {type: url, url: https://example.com}, type: structure_template}",
 			"--idempotency-key", "idempotency_key",
 			"--workspace-id", "workspace_id",
@@ -176,7 +176,7 @@ func TestProteinLibraryScreenStart(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:library-screen", "start",
-			"--protein.entities", "[{chain_ids: [string], modifications: [{residue_index: 0, type: ccd, value: value}], type: protein, value: value, cyclic: true}]",
+			"--protein.entities", "[{chain_ids: [string], type: protein, value: value, cyclic: true, modifications: [{residue_index: 0, type: ccd, value: value}]}]",
 			"--protein.id", "id",
 			"--target", "{chain_selection: {A: {chain_type: polymer, crop_residues: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], epitope_residues: [10, 11, 12], flexible_residues: [5, 6, 7]}}, structure: {type: url, url: https://example.com}, type: structure_template}",
 			"--idempotency-key", "idempotency_key",
@@ -191,13 +191,13 @@ func TestProteinLibraryScreenStart(t *testing.T) {
 			"  - entities:\n" +
 			"      - chain_ids:\n" +
 			"          - string\n" +
+			"        type: protein\n" +
+			"        value: value\n" +
+			"        cyclic: true\n" +
 			"        modifications:\n" +
 			"          - residue_index: 0\n" +
 			"            type: ccd\n" +
 			"            value: value\n" +
-			"        type: protein\n" +
-			"        value: value\n" +
-			"        cyclic: true\n" +
 			"    id: id\n" +
 			"target:\n" +
 			"  chain_selection:\n" +
