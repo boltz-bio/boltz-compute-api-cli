@@ -64,12 +64,16 @@ func TestLoginHonorsAuthorizationOverrideAndKeepsWorkingIfBrowserOpenFails(t *te
 		IssuerURL:        provider.IssuerURL(),
 		ClientID:         "client-123",
 		Scopes:           []string{"openid", "profile", "email"},
+		Audience:         "boltz-compute-api",
 		AuthorizationURL: overrideURL,
 		Output:           &output,
 	})
 	require.NoError(t, err)
 	require.Equal(t, "login-access", result.Tokens.AccessToken)
 	require.Equal(t, "/authorize-override", provider.LastAuthorizationPath())
+	require.Equal(t, "boltz-compute-api", provider.LastAuthorizationQuery().Get("audience"))
+	require.Equal(t, "boltz-compute-api", provider.LastAuthorizationQuery().Get("resource"))
+	require.Equal(t, "boltz-compute-api", provider.LastTokenForm().Get("resource"))
 	require.Contains(t, output.String(), overrideURL)
 	require.Contains(t, output.String(), "Could not open browser automatically")
 	require.Equal(t, "userinfo@example.com", result.Identity.Email)
@@ -88,12 +92,14 @@ func TestRefreshReturnsRotatedTokens(t *testing.T) {
 		},
 		ClientID:     "client-123",
 		RefreshToken: "refresh-token",
+		Resource:     "boltz-compute-api",
 	})
 	require.NoError(t, err)
 	require.Equal(t, "refreshed-access", tokens.AccessToken)
 	require.Equal(t, "rotated-refresh", tokens.RefreshToken)
 	require.Equal(t, "Bearer", tokens.TokenType)
 	require.Equal(t, []string{"openid", "email"}, tokens.GrantedScopes)
+	require.Equal(t, "boltz-compute-api", provider.LastTokenForm().Get("resource"))
 }
 
 func TestRefreshDiscoversSigningMetadataWhenNotProvided(t *testing.T) {
@@ -137,10 +143,12 @@ type mockOIDCProvider struct {
 	publicJWKSetJSON []byte
 	includeUserInfo  bool
 
-	mu                    sync.Mutex
-	lastNonce             string
-	lastAuthorizationPath string
-	lastRevocation        url.Values
+	mu                     sync.Mutex
+	lastNonce              string
+	lastAuthorizationPath  string
+	lastAuthorizationQuery url.Values
+	lastTokenForm          url.Values
+	lastRevocation         url.Values
 }
 
 func newMockOIDCProvider(t *testing.T, includeUserInfo bool) *mockOIDCProvider {
@@ -199,6 +207,18 @@ func (p *mockOIDCProvider) LastAuthorizationPath() string {
 	return p.lastAuthorizationPath
 }
 
+func (p *mockOIDCProvider) LastAuthorizationQuery() url.Values {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return cloneValues(p.lastAuthorizationQuery)
+}
+
+func (p *mockOIDCProvider) LastTokenForm() url.Values {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return cloneValues(p.lastTokenForm)
+}
+
 func (p *mockOIDCProvider) LastRevocation() url.Values {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -228,6 +248,7 @@ func (p *mockOIDCProvider) handleDiscovery(w http.ResponseWriter, r *http.Reques
 func (p *mockOIDCProvider) handleAuthorize(w http.ResponseWriter, r *http.Request) {
 	p.mu.Lock()
 	p.lastAuthorizationPath = r.URL.Path
+	p.lastAuthorizationQuery = cloneValues(r.URL.Query())
 	p.lastNonce = r.URL.Query().Get("nonce")
 	p.mu.Unlock()
 
@@ -253,6 +274,9 @@ func (p *mockOIDCProvider) handleToken(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	p.mu.Lock()
+	p.lastTokenForm = cloneValues(r.PostForm)
+	p.mu.Unlock()
 
 	var response map[string]any
 	switch r.PostForm.Get("grant_type") {
@@ -343,4 +367,12 @@ func (p *mockOIDCProvider) mustSignIDToken(clientID, nonce string) string {
 
 func visitURL(target string) {
 	_, _ = http.Get(target)
+}
+
+func cloneValues(values url.Values) url.Values {
+	cloned := make(url.Values, len(values))
+	for key, value := range values {
+		cloned[key] = append([]string(nil), value...)
+	}
+	return cloned
 }

@@ -51,11 +51,13 @@ func authFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.StringFlag{
 			Name:    "auth-issuer-url",
+			Value:   authconfig.DefaultIssuerURL,
 			Usage:   "OIDC issuer URL for OAuth login and bearer-token refresh",
 			Sources: cli.EnvVars(authconfig.EnvAuthIssuerURL),
 		},
 		&cli.StringFlag{
 			Name:    "auth-client-id",
+			Value:   authconfig.DefaultClientID,
 			Usage:   "OAuth client ID for the public client",
 			Sources: cli.EnvVars(authconfig.EnvAuthClientID),
 		},
@@ -66,7 +68,8 @@ func authFlags() []cli.Flag {
 		},
 		&cli.StringFlag{
 			Name:    "auth-audience",
-			Usage:   "Optional OAuth audience to request during login",
+			Value:   authconfig.DefaultAudience,
+			Usage:   "OAuth audience/resource to request during login",
 			Sources: cli.EnvVars(authconfig.EnvAuthAudience),
 		},
 		&cli.StringFlag{
@@ -101,6 +104,7 @@ func authFlags() []cli.Flag {
 		},
 		&cli.IntFlag{
 			Name:    "listen-port",
+			Value:   authconfig.DefaultListenPort,
 			Usage:   "Bind the OAuth loopback callback listener to this port",
 			Sources: cli.EnvVars(authconfig.EnvListenPort),
 		},
