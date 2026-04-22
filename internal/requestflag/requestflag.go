@@ -2,6 +2,7 @@ package requestflag
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"reflect"
 	"strconv"
@@ -38,6 +39,7 @@ type Flag[
 	HeaderPath string // location in the request header to put this flag's value
 	BodyPath   string // location in the request body to put this flag's value
 	BodyRoot   bool   // if true, then use this value as the entire request body
+	BodyMerge  bool   // if true, merge this map value into the top-level request body
 
 	// Const, when true, marks this flag as a constant. The flag's Default value is used as the fixed value
 	// and always included in the request (IsSet returns true). The user can still see and override the flag,
@@ -70,8 +72,13 @@ type InRequest interface {
 	GetHeaderPath() string
 	GetBodyPath() string
 	IsBodyRoot() bool
+	IsBodyMerge() bool
 	IsFileInput() bool
 	GetDataAliases() []string
+}
+
+type ValueParser interface {
+	ParseValue(string) (any, error)
 }
 
 func (f Flag[T]) GetQueryPath() string {
@@ -88,6 +95,10 @@ func (f Flag[T]) GetBodyPath() string {
 
 func (f Flag[T]) IsBodyRoot() bool {
 	return f.BodyRoot
+}
+
+func (f Flag[T]) IsBodyMerge() bool {
+	return f.BodyMerge
 }
 
 func (f Flag[T]) IsFileInput() bool {
@@ -129,6 +140,8 @@ func ExtractRequestContents(cmd *cli.Command) RequestContents {
 			}
 			if toSend.IsBodyRoot() {
 				res.Body = value
+			} else if toSend.IsBodyMerge() {
+				maps.Copy(bodyMap, value.(map[string]any))
 			} else if bodyPath := toSend.GetBodyPath(); bodyPath != "" {
 				bodyMap[bodyPath] = value
 			}
@@ -244,6 +257,10 @@ func (f *Flag[T]) Set(name string, val string) error {
 	return nil
 }
 
+func (f *Flag[T]) ParseValue(raw string) (any, error) {
+	return parseCLIArg[T](raw)
+}
+
 func (f *Flag[T]) Get() any {
 	if f.value != nil {
 		return f.value.Get()
@@ -288,7 +305,7 @@ func (f *Flag[T]) IsRequired() bool {
 	}
 	// Intentionally don't use `f.Required`, because request flags may be passed
 	// over stdin as well as by flag.
-	if f.BodyPath != "" || f.BodyRoot {
+	if f.BodyPath != "" || f.BodyRoot || f.BodyMerge {
 		return false
 	}
 	return f.Required

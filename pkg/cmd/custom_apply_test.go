@@ -63,6 +63,109 @@ func TestApplyCustomizationsAnnotatesRepeatableArrayFlags(t *testing.T) {
 	require.Contains(t, usageForFlag(t, proteinFlag), "use the body field proteins")
 }
 
+func TestApplyCustomizationsAddsMergedInputFlags(t *testing.T) {
+	t.Parallel()
+
+	ApplyCustomizations(Command)
+
+	for _, tc := range []struct {
+		path       []string
+		innerFlags []string
+	}{
+		{
+			path:       []string{"small-molecule:design", "estimate-cost"},
+			innerFlags: []string{"input.num-molecules", "input.target", "input.chemical-space", "input.molecule-filters"},
+		},
+		{
+			path:       []string{"small-molecule:design", "start"},
+			innerFlags: []string{"input.num-molecules", "input.target", "input.chemical-space", "input.molecule-filters"},
+		},
+		{
+			path:       []string{"small-molecule:library-screen", "estimate-cost"},
+			innerFlags: []string{"input.molecules", "input.target", "input.molecule-filters"},
+		},
+		{
+			path:       []string{"small-molecule:library-screen", "start"},
+			innerFlags: []string{"input.molecules", "input.target", "input.molecule-filters"},
+		},
+		{
+			path:       []string{"protein:design", "estimate-cost"},
+			innerFlags: []string{"input.binder-specification", "input.num-proteins", "input.target"},
+		},
+		{
+			path:       []string{"protein:design", "start"},
+			innerFlags: []string{"input.binder-specification", "input.num-proteins", "input.target"},
+		},
+		{
+			path:       []string{"protein:library-screen", "estimate-cost"},
+			innerFlags: []string{"input.proteins", "input.target"},
+		},
+		{
+			path:       []string{"protein:library-screen", "start"},
+			innerFlags: []string{"input.proteins", "input.target"},
+		},
+	} {
+		cmd := mustFindCommand(t, Command, tc.path...)
+		inputFlag := mustFindFlag(t, cmd, "input")
+		require.Contains(t, cmd.Usage, "Prefer `--input` for full payloads")
+		require.Contains(t, usageForFlag(t, inputFlag), "@json://")
+		require.Contains(t, usageForFlag(t, inputFlag), "--idempotency-key")
+		require.Contains(t, usageForFlag(t, inputFlag), "--workspace-id")
+
+		for _, name := range tc.innerFlags {
+			mustFindFlag(t, cmd, name)
+		}
+
+		switch tc.path[0] {
+		case "small-molecule:design", "small-molecule:library-screen", "protein:design", "protein:library-screen":
+			targetFlag := findFlag(cmd, "target")
+			if targetFlag != nil {
+				require.Contains(t, usageForFlag(t, targetFlag), "prefer `--input` for the full payload")
+				require.Contains(t, usageForFlag(t, targetFlag), "overrides the matching field from `--input`")
+			}
+		}
+
+		workspaceFlag := findFlag(cmd, "workspace-id")
+		if workspaceFlag != nil {
+			require.Contains(t, usageForFlag(t, workspaceFlag), "Keep this as a top-level flag")
+			require.Contains(t, usageForFlag(t, workspaceFlag), "top-level flag wins")
+		}
+
+		require.NoError(t, requestflag.CheckInnerFlags(*cmd))
+	}
+}
+
+func TestAddMergedInputFlagDerivesInnerFlagsFromTopLevelBodyFlags(t *testing.T) {
+	t.Parallel()
+
+	cmd := &cli.Command{
+		Name: "start",
+		Flags: []cli.Flag{
+			&requestflag.Flag[string]{
+				Name:     "priority",
+				Usage:    "Synthetic future top-level field.",
+				BodyPath: "priority",
+			},
+			&requestflag.Flag[string]{
+				Name:     "workspace-id",
+				BodyPath: "workspace_id",
+			},
+			&requestflag.Flag[string]{
+				Name:     "idempotency-key",
+				BodyPath: "idempotency_key",
+			},
+		},
+	}
+
+	addMergedInputFlag(cmd, mergedInputUsage)
+
+	mustFindFlag(t, cmd, "input")
+	mustFindFlag(t, cmd, "input.priority")
+	require.Nil(t, findFlag(cmd, "input.workspace-id"))
+	require.Nil(t, findFlag(cmd, "input.idempotency-key"))
+	require.NoError(t, requestflag.CheckInnerFlags(*cmd))
+}
+
 func TestTransformUsageMentionsPerItemListBehavior(t *testing.T) {
 	t.Parallel()
 
@@ -85,6 +188,9 @@ func TestManpageIncludesRepeatableArrayFlagGuidance(t *testing.T) {
 	require.Contains(t, manpage, "use the body field molecules")
 	require.Contains(t, manpage, "Repeat --protein to add entries")
 	require.Contains(t, manpage, "use the body field proteins")
+	require.Contains(t, manpage, "top-level flags remain available as overrides")
+	require.Contains(t, manpage, "@json://...")
+	require.Contains(t, manpage, "Keep this as a top-level flag even when using")
 }
 
 func TestRepeatedSingularFlagsPopulatePluralBodyField(t *testing.T) {

@@ -319,6 +319,39 @@ func TestRequestParams(t *testing.T) {
 		assert.True(t, ok, "Expected body to be int64, got %T", contents.Body)
 		assert.Equal(t, int64(42), intBody)
 	})
+
+	t.Run("merged body map", func(t *testing.T) {
+		t.Parallel()
+
+		cmd := &cli.Command{
+			Name: "test",
+			Flags: []cli.Flag{
+				&Flag[map[string]any]{
+					Name:      "input",
+					BodyMerge: true,
+					value: &cliValue[map[string]any]{value: map[string]any{
+						"target":        map[string]any{"name": "from-input"},
+						"workspace_id":  "workspace-from-input",
+						"num_molecules": int64(10),
+					}},
+					hasBeenSet: true,
+				},
+				&Flag[string]{
+					Name:       "workspace-id",
+					BodyPath:   "workspace_id",
+					value:      &cliValue[string]{value: "workspace-from-flag"},
+					hasBeenSet: true,
+				},
+			},
+		}
+
+		contents := ExtractRequestContents(cmd)
+		bodyMap, ok := contents.Body.(map[string]any)
+		assert.True(t, ok, "Expected body to be map[string]any, got %T", contents.Body)
+		assert.Equal(t, map[string]any{"name": "from-input"}, bodyMap["target"])
+		assert.Equal(t, int64(10), bodyMap["num_molecules"])
+		assert.Equal(t, "workspace-from-flag", bodyMap["workspace_id"])
+	})
 }
 
 func TestFlagSet(t *testing.T) {
