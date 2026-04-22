@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1 (2026-04-22)
+
+Full Changelog: [v0.7.0...v0.7.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.7.0...v0.7.1)
+
+### Bug Fixes
+
+* **download-results:** reuse existing run dirs ([e2b52ff](https://github.com/boltz-bio/boltz-compute-api-cli/commit/e2b52ffe4380a9b184f04f050e598c92c8757d27))
+
 ## 0.7.0 (2026-04-22)
 
 Full Changelog: [v0.6.0...v0.7.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.6.0...v0.7.0)
