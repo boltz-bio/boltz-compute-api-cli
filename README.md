@@ -50,7 +50,7 @@ boltz-api [resource] <command> [flags...]
 ```sh
 boltz-api predictions:structure-and-binding start \
   --api-key 'My API Key' \
-  --input '{entities: [{chain_ids: [string], modifications: [{residue_index: 0, type: ccd, value: value}], type: protein, value: value}]}' \
+  --input '{entities: [{chain_ids: [string], type: protein, value: value}]}' \
   --model boltz-2.1
 ```
 

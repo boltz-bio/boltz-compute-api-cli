@@ -57,7 +57,7 @@ func TestPredictionsStructureAndBindingEstimateCost(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"predictions:structure-and-binding", "estimate-cost",
-			"--input", "{entities: [{chain_ids: [string], modifications: [{residue_index: 0, type: ccd, value: value}], type: protein, value: value, cyclic: true}], binding: {binder_chain_id: binder_chain_id, type: ligand_protein_binding}, bonds: [{atom1: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}, atom2: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}}], constraints: [{binder_chain_id: binder_chain_id, contact_residues: {A: [42, 43, 44, 67, 68, 69]}, max_distance_angstrom: 0, type: pocket, force: true}], model_options: {recycling_steps: 1, sampling_steps: 1, step_scale: 1.3}, num_samples: 1}",
+			"--input", "{entities: [{chain_ids: [string], type: protein, value: value, cyclic: true, modifications: [{residue_index: 0, type: ccd, value: value}]}], binding: {binder_chain_id: binder_chain_id, type: ligand_protein_binding}, bonds: [{atom1: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}, atom2: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}}], constraints: [{binder_chain_id: binder_chain_id, contact_residues: {A: [42, 43, 44, 67, 68, 69]}, max_distance_angstrom: 0, type: pocket, force: true}], model_options: {recycling_steps: 1, sampling_steps: 1, step_scale: 1.3}, num_samples: 1}",
 			"--model", "boltz-2.1",
 			"--idempotency-key", "idempotency_key",
 			"--workspace-id", "workspace_id",
@@ -73,7 +73,7 @@ func TestPredictionsStructureAndBindingEstimateCost(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"predictions:structure-and-binding", "estimate-cost",
-			"--input.entities", "[{chain_ids: [string], modifications: [{residue_index: 0, type: ccd, value: value}], type: protein, value: value, cyclic: true}]",
+			"--input.entities", "[{chain_ids: [string], type: protein, value: value, cyclic: true, modifications: [{residue_index: 0, type: ccd, value: value}]}]",
 			"--input.binding", "{binder_chain_id: binder_chain_id, type: ligand_protein_binding}",
 			"--input.bonds", "[{atom1: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}, atom2: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}}]",
 			"--input.constraints", "[{binder_chain_id: binder_chain_id, contact_residues: {A: [42, 43, 44, 67, 68, 69]}, max_distance_angstrom: 0, type: pocket, force: true}]",
@@ -92,13 +92,13 @@ func TestPredictionsStructureAndBindingEstimateCost(t *testing.T) {
 			"  entities:\n" +
 			"    - chain_ids:\n" +
 			"        - string\n" +
+			"      type: protein\n" +
+			"      value: value\n" +
+			"      cyclic: true\n" +
 			"      modifications:\n" +
 			"        - residue_index: 0\n" +
 			"          type: ccd\n" +
 			"          value: value\n" +
-			"      type: protein\n" +
-			"      value: value\n" +
-			"      cyclic: true\n" +
 			"  binding:\n" +
 			"    binder_chain_id: binder_chain_id\n" +
 			"    type: ligand_protein_binding\n" +
@@ -147,7 +147,7 @@ func TestPredictionsStructureAndBindingStart(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"predictions:structure-and-binding", "start",
-			"--input", "{entities: [{chain_ids: [string], modifications: [{residue_index: 0, type: ccd, value: value}], type: protein, value: value, cyclic: true}], binding: {binder_chain_id: binder_chain_id, type: ligand_protein_binding}, bonds: [{atom1: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}, atom2: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}}], constraints: [{binder_chain_id: binder_chain_id, contact_residues: {A: [42, 43, 44, 67, 68, 69]}, max_distance_angstrom: 0, type: pocket, force: true}], model_options: {recycling_steps: 1, sampling_steps: 1, step_scale: 1.3}, num_samples: 1}",
+			"--input", "{entities: [{chain_ids: [string], type: protein, value: value, cyclic: true, modifications: [{residue_index: 0, type: ccd, value: value}]}], binding: {binder_chain_id: binder_chain_id, type: ligand_protein_binding}, bonds: [{atom1: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}, atom2: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}}], constraints: [{binder_chain_id: binder_chain_id, contact_residues: {A: [42, 43, 44, 67, 68, 69]}, max_distance_angstrom: 0, type: pocket, force: true}], model_options: {recycling_steps: 1, sampling_steps: 1, step_scale: 1.3}, num_samples: 1}",
 			"--model", "boltz-2.1",
 			"--idempotency-key", "idempotency_key",
 			"--workspace-id", "workspace_id",
@@ -163,7 +163,7 @@ func TestPredictionsStructureAndBindingStart(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"predictions:structure-and-binding", "start",
-			"--input.entities", "[{chain_ids: [string], modifications: [{residue_index: 0, type: ccd, value: value}], type: protein, value: value, cyclic: true}]",
+			"--input.entities", "[{chain_ids: [string], type: protein, value: value, cyclic: true, modifications: [{residue_index: 0, type: ccd, value: value}]}]",
 			"--input.binding", "{binder_chain_id: binder_chain_id, type: ligand_protein_binding}",
 			"--input.bonds", "[{atom1: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}, atom2: {atom_name: atom_name, chain_id: chain_id, type: ligand_atom}}]",
 			"--input.constraints", "[{binder_chain_id: binder_chain_id, contact_residues: {A: [42, 43, 44, 67, 68, 69]}, max_distance_angstrom: 0, type: pocket, force: true}]",
@@ -182,13 +182,13 @@ func TestPredictionsStructureAndBindingStart(t *testing.T) {
 			"  entities:\n" +
 			"    - chain_ids:\n" +
 			"        - string\n" +
+			"      type: protein\n" +
+			"      value: value\n" +
+			"      cyclic: true\n" +
 			"      modifications:\n" +
 			"        - residue_index: 0\n" +
 			"          type: ccd\n" +
 			"          value: value\n" +
-			"      type: protein\n" +
-			"      value: value\n" +
-			"      cyclic: true\n" +
 			"  binding:\n" +
 			"    binder_chain_id: binder_chain_id\n" +
 			"    type: ligand_protein_binding\n" +
