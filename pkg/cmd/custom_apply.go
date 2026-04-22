@@ -49,6 +49,9 @@ func ApplyCustomizations(app *cli.Command) {
 	}
 
 	addMergedInputFlags(app)
+	if !hasCommand(app.Commands, downloadStatusCommand.Name) {
+		app.Commands = append(app.Commands, downloadStatusCommand)
+	}
 	customizeCommandTree(app)
 }
 
