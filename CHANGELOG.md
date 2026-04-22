@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.2 (2026-04-22)
+
+Full Changelog: [v0.5.1...v0.5.2](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.5.1...v0.5.2)
+
+### Bug Fixes
+
+* **compute-api:** default omitted polymer modifications ([c7ee7b0](https://github.com/boltz-bio/boltz-compute-api-cli/commit/c7ee7b03c782c7ef8c5c24831889d363ce3ef091))
+
+
+### Refactors
+
+* **cli:** isolate custom command code ([7235b5f](https://github.com/boltz-bio/boltz-compute-api-cli/commit/7235b5fb67146b1f99f07112af038b167d9b2984))
+
 ## 0.5.1 (2026-04-21)
 
 Full Changelog: [v0.5.0...v0.5.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.5.0...v0.5.1)
