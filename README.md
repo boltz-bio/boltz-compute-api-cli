@@ -39,6 +39,21 @@ After cloning the git repository for this project, you can use the
 ./scripts/run args...
 ```
 
+### Customization Model
+
+Custom CLI extensions should follow one path:
+
+- add commands, global flags, and command-tree rewrites through `pkg/cmd/custom_apply.go`
+- keep Boltz-specific hand-written command code in `pkg/cmd/custom_*.go`
+- avoid editing generated resource command files
+
+Cross-cutting generated behavior is intentionally limited to three temporary seam
+files: `pkg/cmd/cmd.go`, `pkg/cmd/cmdutil.go`, and `cmd/boltz-api/main.go`.
+Everything else in `pkg/cmd` should be either generated from Stainless or part
+of the small non-generated runtime allowlist already in the repo. New custom
+behavior should follow the `custom_*.go` pattern rather than add logic to
+generated commands directly.
+
 ## Usage
 
 The CLI follows a resource-based command structure:

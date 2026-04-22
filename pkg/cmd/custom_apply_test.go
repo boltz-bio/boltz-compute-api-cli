@@ -1,3 +1,4 @@
+// Custom CLI extension code. Not generated.
 package cmd
 
 import (
@@ -28,6 +29,24 @@ func TestApplyCustomizationsAddsUniversalIDAlias(t *testing.T) {
 		flag := mustFindFlag(t, cmd, tc.flagName)
 		require.Contains(t, flag.Names(), "id")
 	}
+}
+
+func TestApplyCustomizationsIsIdempotent(t *testing.T) {
+	t.Parallel()
+
+	root := &cli.Command{
+		Name: "boltz-api",
+		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "transform"},
+		},
+	}
+
+	ApplyCustomizations(root)
+	ApplyCustomizations(root)
+
+	require.Len(t, root.Commands, 2)
+	require.Len(t, root.Flags, 12)
+	require.Equal(t, transformUsage, usageForFlag(t, mustFindFlag(t, root, "transform")))
 }
 
 func TestApplyCustomizationsAnnotatesRepeatableArrayFlags(t *testing.T) {

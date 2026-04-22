@@ -4,22 +4,16 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"slices"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/autherror"
 	"github.com/boltz-bio/boltz-compute-api-cli/pkg/cmd"
-	"github.com/boltz-bio/boltz-compute-api-go"
-	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
 
 func main() {
 	app := cmd.Command
-	cmd.ApplyCustomizations(app)
 
 	if slices.Contains(os.Args, "__complete") {
 		prepareForAutocomplete(app)
@@ -40,40 +34,10 @@ func main() {
 			exitCode = exitErr.ExitCode()
 		}
 
-		var apierr *boltzcompute.Error
-		if errors.As(err, &apierr) {
-			fmt.Fprintf(os.Stderr, "%s %q: %d %s\n", apierr.Request.Method, apierr.Request.URL, apierr.Response.StatusCode, http.StatusText(apierr.Response.StatusCode))
-			format := app.String("format-error")
-			json := gjson.Parse(apierr.RawJSON())
-			show_err := cmd.ShowJSON(json, cmd.ShowJSONOpts{
-				ExplicitFormat: app.IsSet("format-error"),
-				Format:         format,
-				Title:          "Error",
-				Transform:      app.String("transform-error"),
-			})
-			if show_err != nil {
-				// Just print the original error:
-				fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-			}
-		} else {
-			var authErr *autherror.Error
-			if errors.As(err, &authErr) {
-				format := app.String("format-error")
-				json := gjson.Parse(authErr.RawJSON())
-				showErr := cmd.ShowJSON(json, cmd.ShowJSONOpts{
-					ExplicitFormat: app.IsSet("format-error"),
-					Format:         format,
-					Title:          "Error",
-					Transform:      app.String("transform-error"),
-				})
-				if showErr != nil {
-					fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-				}
-			} else if cmd.CommandErrorBuffer.Len() > 0 {
-				os.Stderr.Write(cmd.CommandErrorBuffer.Bytes())
-			} else if err.Error() != "" {
-				fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-			}
+		// Temporary Stainless seam: keep custom top-level error formatting behind a
+		// single helper instead of embedding custom logic in the generated entrypoint.
+		if !cmd.WriteCommandErrorOutput(app, err, os.Stdout, os.Stderr) && err.Error() != "" {
+			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 		}
 		os.Exit(exitCode)
 	}

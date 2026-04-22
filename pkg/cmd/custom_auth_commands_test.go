@@ -1,3 +1,4 @@
+// Custom CLI extension code. Not generated.
 package cmd
 
 import (
