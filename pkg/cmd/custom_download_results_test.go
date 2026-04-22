@@ -68,6 +68,11 @@ func TestDownloadResultsCommandValidation(t *testing.T) {
 			args:    []string{"download-results", "--id", "psmp_123"},
 			wantErr: "download-results only supports prediction and pipeline run IDs",
 		},
+		{
+			name:    "reject invalid progress format",
+			args:    []string{"download-results", "--id", "pred_123", "--progress-format", "csv"},
+			wantErr: "--progress-format must be one of",
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -101,7 +106,7 @@ func TestDownloadResultsMetadataRoundTripPreservesExtraFields(t *testing.T) {
 	assert.Contains(t, string(body), `"unexpected": true`)
 }
 
-func TestPredictionDownloadResultsQuietOutput(t *testing.T) {
+func TestPredictionDownloadResultsDefaultProgressJSONL(t *testing.T) {
 	setDownloadResultsTestEnv(t)
 	cwd := t.TempDir()
 	t.Chdir(cwd)
@@ -137,7 +142,7 @@ func TestPredictionDownloadResultsQuietOutput(t *testing.T) {
 
 	runDir := filepath.Join(cwd, downloadResultsDefaultRootDir, "prediction-run")
 	assert.Equal(t, runDir+"\n", stdout)
-	assert.Empty(t, stderr)
+	assert.NotEmpty(t, stderr)
 	assert.EqualValues(t, 1, archiveRequests.Load())
 	assert.FileExists(t, filepath.Join(runDir, "outputs", "archive.tar.gz"))
 	assert.FileExists(t, filepath.Join(runDir, "outputs", "files", "nested", "output.txt"))
@@ -189,7 +194,7 @@ func TestPredictionResumeReextractsMissingDirectory(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, runDir+"\n", stdout)
-	assert.Empty(t, stderr)
+	assert.NotEmpty(t, stderr)
 	assert.EqualValues(t, 1, archiveRequests.Load())
 	assert.DirExists(t, extractedDir)
 	assert.FileExists(t, filepath.Join(extractedDir, "nested", "output.txt"))
@@ -245,7 +250,7 @@ func TestPredictionPartialDownloadLeavesPartAndRecovers(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, runDir+"\n", stdout)
-	assert.Empty(t, stderr)
+	assert.NotEmpty(t, stderr)
 	assert.EqualValues(t, 2, archiveRequests.Load())
 	assert.FileExists(t, archivePath)
 	assert.NoFileExists(t, archivePath+".part")
@@ -331,7 +336,7 @@ func TestPipelineDownloadResultsHappyPathAllRunTypes(t *testing.T) {
 
 			runDir := filepath.Join(cwd, downloadResultsDefaultRootDir, runName)
 			assert.Equal(t, runDir+"\n", stdout)
-			assert.Empty(t, stderr)
+			assert.NotEmpty(t, stderr)
 			assert.FileExists(t, filepath.Join(runDir, "results", "res_1", "archive.tar.gz"))
 			assert.FileExists(t, filepath.Join(runDir, "results", "res_1", "files", "result.txt"))
 			assert.FileExists(t, filepath.Join(runDir, "results", "res_2", "archive.tar.gz"))
@@ -400,7 +405,7 @@ func TestPipelineDownloadResultsResumesPendingPageAfterPartialFailure(t *testing
 	require.NoError(t, err)
 
 	assert.Equal(t, runDir+"\n", stdout)
-	assert.Empty(t, stderr)
+	assert.NotEmpty(t, stderr)
 	assert.FileExists(t, filepath.Join(runDir, "results", "res_1", "files", "result.txt"))
 	assert.FileExists(t, filepath.Join(runDir, "results", "res_2", "files", "result.txt"))
 	metadata = mustLoadDownloadMetadata(t, runDir)
@@ -488,7 +493,7 @@ func TestPipelineStoppedDownloadsAndSucceeds(t *testing.T) {
 
 	runDir := filepath.Join(cwd, downloadResultsDefaultRootDir, "pipeline-stopped")
 	assert.Equal(t, runDir+"\n", stdout)
-	assert.Empty(t, stderr)
+	assert.NotEmpty(t, stderr)
 	assert.FileExists(t, filepath.Join(runDir, "results", "res_1", "files", "result.txt"))
 }
 
@@ -568,6 +573,7 @@ func TestDownloadResultsVerboseWritesProgressToStderr(t *testing.T) {
 		"download-results",
 		"--id", "pred_123",
 		"--name", "verbose-run",
+		"--progress-format", "text",
 		"--verbose",
 		"--poll-interval-seconds", "0",
 	)
@@ -577,6 +583,69 @@ func TestDownloadResultsVerboseWritesProgressToStderr(t *testing.T) {
 	assert.Equal(t, runDir+"\n", stdout)
 	assert.Contains(t, stderr, "Waiting for prediction")
 	assert.Contains(t, stderr, "Downloading archive")
+}
+
+func TestDownloadResultsDefaultJSONLProgressWritesMachineReadableEvents(t *testing.T) {
+	setDownloadResultsTestEnv(t)
+	cwd := t.TempDir()
+	t.Chdir(cwd)
+
+	archiveBytes := makeTarGzArchive(t, map[string]string{"nested/output.txt": "done"})
+	var retrieveCalls atomic.Int32
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/compute/v1/predictions/structure-and-binding/pred_123":
+			if retrieveCalls.Add(1) == 1 {
+				writeJSON(t, w, predictionResponseJSON("pred_123", "running", "ws_123", "", ""))
+				return
+			}
+			writeJSON(t, w, predictionResponseJSON("pred_123", "succeeded", "ws_123", server.URL+"/files/prediction.tar.gz", ""))
+		case "/files/prediction.tar.gz":
+			_, _ = w.Write(archiveBytes)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	stdout, stderr, err := runDownloadResultsCLI(
+		t,
+		"--base-url", server.URL,
+		"--api-key", "test-key",
+		"download-results",
+		"--id", "pred_123",
+		"--name", "jsonl-run",
+		"--poll-interval-seconds", "0",
+	)
+	require.NoError(t, err)
+
+	runDir := filepath.Join(cwd, downloadResultsDefaultRootDir, "jsonl-run")
+	assert.Equal(t, runDir+"\n", stdout)
+
+	lines := strings.Split(strings.TrimSpace(stderr), "\n")
+	require.NotEmpty(t, lines)
+
+	seenEvents := map[string]bool{}
+	for _, line := range lines {
+		var event map[string]any
+		require.NoError(t, json.Unmarshal([]byte(line), &event))
+		require.Equal(t, runDir, event["run_dir"])
+		require.Equal(t, "jsonl-run", event["name"])
+		_, hasTimestamp := event["ts"]
+		require.True(t, hasTimestamp)
+
+		eventName, ok := event["event"].(string)
+		require.True(t, ok)
+		seenEvents[eventName] = true
+	}
+
+	assert.True(t, seenEvents["waiting"])
+	assert.True(t, seenEvents["status"])
+	assert.True(t, seenEvents["archive_download"])
+	assert.True(t, seenEvents["archive_extract"])
+	assert.True(t, seenEvents["ready"])
 }
 
 func runDownloadResultsCLI(t *testing.T, args ...string) (string, string, error) {
@@ -596,6 +665,9 @@ func newDownloadResultsTestRoot(stdout io.Writer, stderr io.Writer) *cli.Command
 		ErrWriter: stderr,
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "base-url"},
+			&cli.StringFlag{Name: "format", Value: "auto"},
+			&cli.StringFlag{Name: "transform"},
+			&cli.BoolFlag{Name: "raw-output"},
 			&requestflag.Flag[string]{
 				Name:    "api-key",
 				Sources: cli.EnvVars("BOLTZ_COMPUTE_API_KEY"),

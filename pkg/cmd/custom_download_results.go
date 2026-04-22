@@ -34,6 +34,8 @@ const (
 	downloadResultsSchemaVersion      = 1
 	downloadResultsPageLimit          = 20
 	downloadResultsSummaryIntervalSec = 30 * time.Second
+	downloadProgressFormatJSONL       = "jsonl"
+	downloadProgressFormatText        = "text"
 )
 
 var (
@@ -87,6 +89,11 @@ var downloadResultsCommand = &cli.Command{
 			Usage: "Polling interval while waiting for remote results",
 			Value: 5.0,
 		},
+		&cli.StringFlag{
+			Name:  "progress-format",
+			Usage: "Format for progress logs written to stderr (`jsonl` or `text`). `jsonl` is the default agent-friendly format.",
+			Value: downloadProgressFormatJSONL,
+		},
 		&cli.BoolFlag{
 			Name:    "verbose",
 			Aliases: []string{"v"},
@@ -115,6 +122,7 @@ type downloadResultsSpec struct {
 	RootDir             string
 	WorkspaceID         *string
 	PollIntervalSeconds float64
+	ProgressFormat      string
 	Verbose             bool
 }
 
@@ -148,6 +156,28 @@ type downloadPendingState struct {
 	ResultIDs  []string `json:"result_ids"`
 }
 
+type downloadStatusResponse struct {
+	RunDir            string          `json:"run_dir"`
+	Name              string          `json:"name"`
+	RunType           downloadRunType `json:"run_type"`
+	RunID             *string         `json:"run_id,omitempty"`
+	WorkspaceID       *string         `json:"workspace_id,omitempty"`
+	Status            *string         `json:"status,omitempty"`
+	Phase             string          `json:"phase"`
+	Ready             bool            `json:"ready"`
+	PendingKind       *string         `json:"pending_kind,omitempty"`
+	PendingCount      int             `json:"pending_count"`
+	PendingAfterID    *string         `json:"pending_after_id,omitempty"`
+	PendingPageLastID *string         `json:"pending_page_last_id,omitempty"`
+	PendingResultIDs  []string        `json:"pending_result_ids,omitempty"`
+	CursorAfterID     *string         `json:"cursor_after_id,omitempty"`
+	LatestResultID    *string         `json:"latest_result_id,omitempty"`
+	StartedAt         *string         `json:"started_at,omitempty"`
+	CompletedAt       *string         `json:"completed_at,omitempty"`
+	StoppedAt         *string         `json:"stopped_at,omitempty"`
+	ErrorCode         *string         `json:"error_code,omitempty"`
+}
+
 type downloadResultsEngine struct {
 	client *boltzcompute.Client
 	sink   *downloadResultsSink
@@ -155,6 +185,7 @@ type downloadResultsEngine struct {
 
 type downloadResultsSink struct {
 	verbose              bool
+	progressFormat       string
 	writer               io.Writer
 	lastRunningSummaryAt time.Time
 }
@@ -330,8 +361,9 @@ func handleDownloadResults(ctx context.Context, cmd *cli.Command) error {
 	engine := downloadResultsEngine{
 		client: &client,
 		sink: &downloadResultsSink{
-			verbose: spec.Verbose,
-			writer:  commandErrorWriter(cmd),
+			verbose:        spec.Verbose,
+			progressFormat: spec.ProgressFormat,
+			writer:         commandErrorWriter(cmd),
 		},
 	}
 
@@ -356,8 +388,12 @@ func parseDownloadResultsSpec(cmd *cli.Command) (downloadResultsSpec, error) {
 	rootDir := strings.TrimSpace(cmd.String("root-dir"))
 	workspaceID := trimOptionalString(cmd.String("workspace-id"))
 	pollIntervalSeconds := cmd.Float64("poll-interval-seconds")
+	progressFormat := normalizeDownloadProgressFormat(cmd.String("progress-format"))
 	if pollIntervalSeconds < 0 {
 		return downloadResultsSpec{}, errors.New("--poll-interval-seconds must be non-negative")
+	}
+	if !isSupportedDownloadProgressFormat(progressFormat) {
+		return downloadResultsSpec{}, fmt.Errorf("--progress-format must be one of: %s", strings.Join([]string{downloadProgressFormatText, downloadProgressFormatJSONL}, ", "))
 	}
 	if name != nil && runDir != nil {
 		return downloadResultsSpec{}, errors.New("--name and --run-dir are mutually exclusive")
@@ -386,6 +422,7 @@ func parseDownloadResultsSpec(cmd *cli.Command) (downloadResultsSpec, error) {
 		RootDir:             rootDir,
 		WorkspaceID:         workspaceID,
 		PollIntervalSeconds: pollIntervalSeconds,
+		ProgressFormat:      progressFormat,
 		Verbose:             cmd.Bool("verbose"),
 	}, nil
 }
@@ -507,6 +544,18 @@ func resolveDownloadPath(raw string) (string, error) {
 	return filepath.Abs(trimmed)
 }
 
+func normalizeDownloadProgressFormat(value string) string {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	if normalized == "" {
+		return downloadProgressFormatJSONL
+	}
+	return normalized
+}
+
+func isSupportedDownloadProgressFormat(value string) bool {
+	return value == downloadProgressFormatText || value == downloadProgressFormatJSONL
+}
+
 func resolveCreateDownloadRunDir(rootDir string) (string, error) {
 	if err := os.MkdirAll(rootDir, 0o755); err != nil {
 		return "", err
@@ -534,6 +583,70 @@ func validateDownloadRunName(name string) (string, error) {
 		return "", errors.New("`name` must be a single directory name, not a path")
 	}
 	return stripped, nil
+}
+
+func buildDownloadStatusResponse(runDir string, metadata downloadRunMetadata) downloadStatusResponse {
+	response := downloadStatusResponse{
+		RunDir:         runDir,
+		Name:           metadata.Name,
+		RunType:        metadata.RunType,
+		RunID:          cloneString(metadata.Remote.RunID),
+		WorkspaceID:    cloneString(metadata.Remote.WorkspaceID),
+		Status:         cloneString(metadata.Remote.Status),
+		Phase:          downloadRunPhase(metadata),
+		Ready:          downloadRunReady(metadata),
+		PendingCount:   0,
+		CursorAfterID:  cloneString(metadata.CursorAfterID),
+		LatestResultID: cloneString(metadata.Remote.LatestResultID),
+		StartedAt:      cloneString(metadata.Remote.StartedAt),
+		CompletedAt:    cloneString(metadata.Remote.CompletedAt),
+		StoppedAt:      cloneString(metadata.Remote.StoppedAt),
+		ErrorCode:      cloneString(metadata.Remote.ErrorCode),
+	}
+	if metadata.Pending != nil {
+		response.PendingKind = cloneString(&metadata.Pending.Kind)
+		response.PendingCount = len(metadata.Pending.ResultIDs)
+		response.PendingAfterID = cloneString(metadata.Pending.AfterID)
+		response.PendingPageLastID = cloneString(metadata.Pending.PageLastID)
+		response.PendingResultIDs = cloneStringSlice(metadata.Pending.ResultIDs)
+	}
+	return response
+}
+
+func downloadRunPhase(metadata downloadRunMetadata) string {
+	if metadata.Pending != nil {
+		switch metadata.Pending.Kind {
+		case downloadPendingKindPredictionArchive:
+			return "materializing_outputs"
+		case downloadPendingKindResultPage:
+			return "materializing_results"
+		default:
+			return metadata.Pending.Kind
+		}
+	}
+
+	switch derefString(metadata.Remote.Status) {
+	case "":
+		return "created"
+	case "pending", "running":
+		return "waiting_remote"
+	case "failed":
+		return "failed"
+	case "succeeded":
+		return "ready"
+	case "stopped":
+		return "stopped"
+	default:
+		return derefString(metadata.Remote.Status)
+	}
+}
+
+func downloadRunReady(metadata downloadRunMetadata) bool {
+	if metadata.Pending != nil {
+		return false
+	}
+	status := derefString(metadata.Remote.Status)
+	return status == "succeeded" || status == "stopped"
 }
 
 func generateDownloadRunName() string {
@@ -787,7 +900,7 @@ func (e *downloadResultsEngine) waitForPrediction(ctx context.Context, runDir st
 	if runID == "" {
 		return fmt.Errorf("Run %s has no confirmed remote run ID", runDir)
 	}
-	e.sink.info(fmt.Sprintf("Waiting for prediction in %s", runDir))
+	e.sink.info("waiting", fmt.Sprintf("Waiting for prediction in %s", runDir), runDir, metadata, nil)
 
 	for {
 		response, err := e.getPrediction(ctx, runID, metadata.Remote.WorkspaceID)
@@ -800,18 +913,20 @@ func (e *downloadResultsEngine) waitForPrediction(ctx context.Context, runDir st
 			return err
 		}
 		if response.Status != previousStatus {
-			e.sink.info(fmt.Sprintf("Prediction status: %s", response.Status))
+			e.sink.info("status", fmt.Sprintf("Prediction status: %s", response.Status), runDir, metadata, nil)
 		}
 
 		switch response.Status {
 		case "pending", "running":
-			e.sink.maybeRunningSummary("Prediction still running...")
+			e.sink.maybeRunningSummary("running", "Prediction still running...", runDir, metadata, nil)
 			if err := sleepWithContext(ctx, pollIntervalSeconds); err != nil {
 				return err
 			}
 			continue
 		case "failed":
-			return failureForMetadata(*metadata)
+			failed := failureForMetadata(*metadata)
+			e.sink.info("failed", failed.Error(), runDir, metadata, nil)
+			return failed
 		case "succeeded":
 			if response.ArchiveURL == nil || strings.TrimSpace(*response.ArchiveURL) == "" {
 				return errors.New("Prediction succeeded but did not return an archive URL")
@@ -825,7 +940,7 @@ func (e *downloadResultsEngine) waitForPrediction(ctx context.Context, runDir st
 				if err := saveDownloadMetadata(runDir, *metadata); err != nil {
 					return err
 				}
-				if err := e.materializeArchive(ctx, *response.ArchiveURL, archivePath, extractedDir); err != nil {
+				if err := e.materializeArchive(ctx, runDir, metadata, *response.ArchiveURL, archivePath, extractedDir, nil); err != nil {
 					return err
 				}
 				metadata.Pending = nil
@@ -833,7 +948,7 @@ func (e *downloadResultsEngine) waitForPrediction(ctx context.Context, runDir st
 					return err
 				}
 			}
-			e.sink.info(fmt.Sprintf("Prediction ready in %s", runDir))
+			e.sink.info("ready", fmt.Sprintf("Prediction ready in %s", runDir), runDir, metadata, nil)
 			return nil
 		default:
 			return fmt.Errorf("Unsupported prediction status %q", response.Status)
@@ -846,7 +961,7 @@ func (e *downloadResultsEngine) waitForPipeline(ctx context.Context, runDir stri
 	if runID == "" {
 		return fmt.Errorf("Run %s has no confirmed remote run ID", runDir)
 	}
-	e.sink.info(fmt.Sprintf("Waiting for %s in %s", strings.ReplaceAll(string(metadata.RunType), "_", " "), runDir))
+	e.sink.info("waiting", fmt.Sprintf("Waiting for %s in %s", strings.ReplaceAll(string(metadata.RunType), "_", " "), runDir), runDir, metadata, nil)
 
 	for {
 		response, err := e.getPipeline(ctx, metadata.RunType, runID, metadata.Remote.WorkspaceID)
@@ -859,7 +974,7 @@ func (e *downloadResultsEngine) waitForPipeline(ctx context.Context, runDir stri
 			return err
 		}
 		if response.Status != previousStatus {
-			e.sink.info(fmt.Sprintf("Pipeline status: %s", response.Status))
+			e.sink.info("status", fmt.Sprintf("Pipeline status: %s", response.Status), runDir, metadata, nil)
 		}
 
 		madeProgress := false
@@ -871,7 +986,7 @@ func (e *downloadResultsEngine) waitForPipeline(ctx context.Context, runDir stri
 				madeProgress = true
 				continue
 			}
-			discovered, err := e.discoverNextPipelinePage(ctx, metadata)
+			discovered, err := e.discoverNextPipelinePage(ctx, runDir, metadata)
 			if err != nil {
 				return err
 			}
@@ -888,16 +1003,18 @@ func (e *downloadResultsEngine) waitForPipeline(ctx context.Context, runDir stri
 		switch response.Status {
 		case "pending", "running":
 			if !madeProgress {
-				e.sink.maybeRunningSummary(pipelineRunningSummary(metadata.Remote.LatestResultID))
+				e.sink.maybeRunningSummary("running", pipelineRunningSummary(metadata.Remote.LatestResultID), runDir, metadata, nil)
 				if err := sleepWithContext(ctx, pollIntervalSeconds); err != nil {
 					return err
 				}
 			}
 			continue
 		case "failed":
-			return failureForMetadata(*metadata)
+			failed := failureForMetadata(*metadata)
+			e.sink.info("failed", failed.Error(), runDir, metadata, nil)
+			return failed
 		case "succeeded", "stopped":
-			e.sink.info(fmt.Sprintf("Pipeline ready in %s", runDir))
+			e.sink.info("ready", fmt.Sprintf("Pipeline ready in %s", runDir), runDir, metadata, nil)
 			return nil
 		default:
 			return fmt.Errorf("Unsupported pipeline status %q", response.Status)
@@ -905,7 +1022,7 @@ func (e *downloadResultsEngine) waitForPipeline(ctx context.Context, runDir stri
 	}
 }
 
-func (e *downloadResultsEngine) discoverNextPipelinePage(ctx context.Context, metadata *downloadRunMetadata) (bool, error) {
+func (e *downloadResultsEngine) discoverNextPipelinePage(ctx context.Context, runDir string, metadata *downloadRunMetadata) (bool, error) {
 	runID := derefString(metadata.Remote.RunID)
 	if runID == "" {
 		return false, errors.New("Pipeline metadata is missing a remote run ID")
@@ -935,6 +1052,7 @@ func (e *downloadResultsEngine) discoverNextPipelinePage(ctx context.Context, me
 		PageLastID: pageLastID,
 		ResultIDs:  resultIDs,
 	}
+	e.sink.info("page_discovered", fmt.Sprintf("Queued %d result archives for download", len(resultIDs)), runDir, metadata, nil)
 	return true, nil
 }
 
@@ -968,7 +1086,7 @@ func (e *downloadResultsEngine) drainPendingPipelinePage(ctx context.Context, ru
 			return err
 		}
 		if !isDownloadMaterialized(archivePath, extractedDir) {
-			if err := e.materializeArchive(ctx, result.ArchiveURL, archivePath, extractedDir); err != nil {
+			if err := e.materializeArchive(ctx, runDir, metadata, result.ArchiveURL, archivePath, extractedDir, map[string]any{"result_id": result.ID}); err != nil {
 				return err
 			}
 		}
@@ -984,12 +1102,12 @@ func (e *downloadResultsEngine) drainPendingPipelinePage(ctx context.Context, ru
 	return saveDownloadMetadata(runDir, *metadata)
 }
 
-func (e *downloadResultsEngine) materializeArchive(ctx context.Context, archiveURL string, archivePath string, extractedDir string) error {
+func (e *downloadResultsEngine) materializeArchive(ctx context.Context, runDir string, metadata *downloadRunMetadata, archiveURL string, archivePath string, extractedDir string, details map[string]any) error {
 	if err := os.MkdirAll(filepath.Dir(archivePath), 0o755); err != nil {
 		return err
 	}
 	if _, err := os.Stat(archivePath); errors.Is(err, os.ErrNotExist) {
-		e.sink.info(fmt.Sprintf("Downloading archive to %s", archivePath))
+		e.sink.info("archive_download", fmt.Sprintf("Downloading archive to %s", archivePath), runDir, metadata, mergeDownloadEventDetails(details, map[string]any{"archive_path": archivePath}))
 		if err := e.downloadArchive(ctx, archiveURL, archivePath); err != nil {
 			return err
 		}
@@ -1003,7 +1121,7 @@ func (e *downloadResultsEngine) materializeArchive(ctx context.Context, archiveU
 		return err
 	}
 
-	e.sink.info(fmt.Sprintf("Extracting archive to %s", extractedDir))
+	e.sink.info("archive_extract", fmt.Sprintf("Extracting archive to %s", extractedDir), runDir, metadata, mergeDownloadEventDetails(details, map[string]any{"archive_path": archivePath, "extracted_dir": extractedDir}))
 	return extractArchive(archivePath, extractedDir)
 }
 
@@ -1284,15 +1402,19 @@ func pipelineRunningSummary(latestResultID *string) string {
 	return fmt.Sprintf("Pipeline still running... latest result: %s", *latestResultID)
 }
 
-func (s *downloadResultsSink) info(message string) {
+func (s *downloadResultsSink) info(event string, message string, runDir string, metadata *downloadRunMetadata, details map[string]any) {
+	if s.progressFormat == downloadProgressFormatJSONL {
+		s.writeJSONL(event, message, runDir, metadata, details)
+		return
+	}
 	if !s.verbose {
 		return
 	}
 	_, _ = fmt.Fprintln(s.writer, message)
 }
 
-func (s *downloadResultsSink) maybeRunningSummary(message string) {
-	if !s.verbose {
+func (s *downloadResultsSink) maybeRunningSummary(event string, message string, runDir string, metadata *downloadRunMetadata, details map[string]any) {
+	if s.progressFormat != downloadProgressFormatJSONL && !s.verbose {
 		return
 	}
 	now := time.Now()
@@ -1300,7 +1422,62 @@ func (s *downloadResultsSink) maybeRunningSummary(message string) {
 		return
 	}
 	s.lastRunningSummaryAt = now
-	s.info(message)
+	s.info(event, message, runDir, metadata, details)
+}
+
+func (s *downloadResultsSink) writeJSONL(event string, message string, runDir string, metadata *downloadRunMetadata, details map[string]any) {
+	payload := map[string]any{
+		"ts":    time.Now().UTC().Format(time.RFC3339Nano),
+		"event": event,
+	}
+	if message != "" {
+		payload["message"] = message
+	}
+	if metadata != nil {
+		mergeDownloadEventFields(payload, buildDownloadStatusResponse(runDir, *metadata))
+	} else if runDir != "" {
+		payload["run_dir"] = runDir
+	}
+	for key, value := range details {
+		if value == nil {
+			continue
+		}
+		payload[key] = value
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	_, _ = fmt.Fprintln(s.writer, string(body))
+}
+
+func mergeDownloadEventFields(target map[string]any, value any) {
+	body, err := json.Marshal(value)
+	if err != nil {
+		return
+	}
+	var fields map[string]any
+	if err := json.Unmarshal(body, &fields); err != nil {
+		return
+	}
+	for key, value := range fields {
+		target[key] = value
+	}
+}
+
+func mergeDownloadEventDetails(base map[string]any, extra map[string]any) map[string]any {
+	if len(base) == 0 && len(extra) == 0 {
+		return nil
+	}
+	merged := make(map[string]any, len(base)+len(extra))
+	for key, value := range base {
+		merged[key] = value
+	}
+	for key, value := range extra {
+		merged[key] = value
+	}
+	return merged
 }
 
 func (e *downloadResultsEngine) getPrediction(ctx context.Context, runID string, workspaceID *string) (downloadPredictionRunInfo, error) {
@@ -1396,6 +1573,15 @@ func cloneString(value *string) *string {
 	}
 	cloned := *value
 	return &cloned
+}
+
+func cloneStringSlice(values []string) []string {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]string, len(values))
+	copy(cloned, values)
+	return cloned
 }
 
 func derefString(value *string) string {

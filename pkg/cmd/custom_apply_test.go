@@ -44,9 +44,12 @@ func TestApplyCustomizationsIsIdempotent(t *testing.T) {
 	ApplyCustomizations(root)
 	ApplyCustomizations(root)
 
-	require.Len(t, root.Commands, 2)
+	require.Len(t, root.Commands, 3)
 	require.Len(t, root.Flags, 12)
 	require.Equal(t, transformUsage, usageForFlag(t, mustFindFlag(t, root, "transform")))
+	mustFindCommand(t, root, "auth")
+	mustFindCommand(t, root, "download-results")
+	mustFindCommand(t, root, "download-status")
 }
 
 func TestApplyCustomizationsAnnotatesRepeatableArrayFlags(t *testing.T) {
