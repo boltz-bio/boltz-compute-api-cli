@@ -132,7 +132,6 @@ func customizeCommandTree(cmd *cli.Command) {
 
 	for _, flag := range cmd.Flags {
 		maybeCustomizeRootFlag(flag)
-		maybeAddIDAlias(cmd, flag)
 		maybeAnnotateRepeatableArrayFlag(flag)
 	}
 
@@ -146,17 +145,6 @@ func maybeCustomizeRootFlag(flag cli.Flag) {
 		return
 	}
 	setFlagStringField(flag, "Usage", transformUsage)
-}
-
-func maybeAddIDAlias(cmd *cli.Command, flag cli.Flag) {
-	if !acceptsUniversalIDAlias(cmd.Name) {
-		return
-	}
-
-	switch canonicalFlagName(flag) {
-	case "run-id", "screen-id":
-		appendFlagAlias(flag, "id")
-	}
 }
 
 func maybeAnnotateRepeatableArrayFlag(flag cli.Flag) {
@@ -187,15 +175,6 @@ func maybeAnnotateRepeatableArrayFlag(flag cli.Flag) {
 	setFlagStringField(flag, "Usage", usage+" "+note)
 }
 
-func acceptsUniversalIDAlias(commandName string) bool {
-	switch commandName {
-	case "retrieve", "list-results", "delete-data", "stop":
-		return true
-	default:
-		return false
-	}
-}
-
 func canonicalFlagName(flag cli.Flag) string {
 	names := flag.Names()
 	if len(names) == 0 {
@@ -223,22 +202,6 @@ func setFlagStringField(flag cli.Flag, name, value string) bool {
 		return false
 	}
 	field.SetString(value)
-	return true
-}
-
-func appendFlagAlias(flag cli.Flag, alias string) bool {
-	field, ok := flagField(flag, "Aliases")
-	if !ok || field.Kind() != reflect.Slice || !field.CanSet() {
-		return false
-	}
-
-	for i := 0; i < field.Len(); i++ {
-		if field.Index(i).String() == alias {
-			return false
-		}
-	}
-
-	field.Set(reflect.Append(field, reflect.ValueOf(alias)))
 	return true
 }
 
