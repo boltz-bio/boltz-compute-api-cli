@@ -52,6 +52,7 @@ func TestAuthLoginNoBrowserSubprocessCreatesSession(t *testing.T) {
 		"--auth-client-id", "client-123",
 		"--auth-scope", "openid",
 		"--auth-scope", "email",
+		"--listen-port", "0",
 	)
 	cmd.Env = env
 	cmd.Dir = repoRoot(t)
@@ -124,16 +125,20 @@ func TestAuthValidateSubprocessClearsInvalidGrantState(t *testing.T) {
 	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
 		IssuerURL: "https://issuer.example.com",
 		ClientID:  "client-123",
+		Audience:  authconfig.DefaultAudience,
 		Scopes:    []string{"openid", "email"},
 	}))
 	require.NoError(t, authstore.SaveSession(authstore.Session{
 		IssuerURL:   "https://issuer.example.com",
 		ClientID:    "client-123",
+		Audience:    authconfig.DefaultAudience,
 		Scopes:      []string{"openid", "email"},
 		AccessToken: "expired-access",
 		TokenType:   "Bearer",
 		Expiry:      time.Now().Add(-1 * time.Hour),
 		TokenURL:    server.URL,
+		JWKSURL:     "https://issuer.example.com/jwks",
+		Algorithms:  []string{"RS256"},
 	}))
 	_, err := authstore.SaveRefreshToken("refresh-token")
 	require.NoError(t, err)
@@ -218,6 +223,19 @@ func authProcessEnv(t *testing.T) []string {
 	t.Setenv("HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", home)
 	t.Setenv("XDG_CACHE_HOME", home)
+	t.Setenv("BOLTZ_COMPUTE_TEST_DISABLE_KEYRING", "1")
+	authstore.SetKeyringBackend(subprocessTestKeyringBackend{
+		get: func(service, key string) (string, error) {
+			return "", errors.New("keyring unavailable")
+		},
+		set: func(service, key, value string) error {
+			return errors.New("keyring unavailable")
+		},
+		delete: func(service, key string) error {
+			return errors.New("keyring unavailable")
+		},
+	})
+	t.Cleanup(authstore.ResetKeyring)
 
 	env := append([]string{}, os.Environ()...)
 	env = append(env,
@@ -227,6 +245,33 @@ func authProcessEnv(t *testing.T) []string {
 		"BOLTZ_COMPUTE_TEST_DISABLE_KEYRING=1",
 	)
 	return env
+}
+
+type subprocessTestKeyringBackend struct {
+	get    func(service, key string) (string, error)
+	set    func(service, key, value string) error
+	delete func(service, key string) error
+}
+
+func (m subprocessTestKeyringBackend) Get(service, key string) (string, error) {
+	if m.get != nil {
+		return m.get(service, key)
+	}
+	return "", nil
+}
+
+func (m subprocessTestKeyringBackend) Set(service, key, value string) error {
+	if m.set != nil {
+		return m.set(service, key, value)
+	}
+	return nil
+}
+
+func (m subprocessTestKeyringBackend) Delete(service, key string) error {
+	if m.delete != nil {
+		return m.delete(service, key)
+	}
+	return nil
 }
 
 type subprocessOIDCProvider struct {

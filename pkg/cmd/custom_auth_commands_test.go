@@ -164,6 +164,7 @@ func TestAuthValidateRefreshesExpiredSession(t *testing.T) {
 		require.NoError(t, r.ParseForm())
 		require.Equal(t, "refresh_token", r.PostForm.Get("grant_type"))
 		require.Equal(t, "refresh-token", r.PostForm.Get("refresh_token"))
+		require.Equal(t, authconfig.DefaultAudience, r.PostForm.Get("resource"))
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"access_token":"new-access","refresh_token":"refresh-token-2","token_type":"Bearer","expires_in":3600,"scope":"openid profile"}`))
 	}))
@@ -172,17 +173,21 @@ func TestAuthValidateRefreshesExpiredSession(t *testing.T) {
 	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
 		IssuerURL: "https://issuer.example.com",
 		ClientID:  "client-123",
+		Audience:  authconfig.DefaultAudience,
 		Scopes:    []string{"openid", "profile"},
 	}))
 	require.NoError(t, authstore.SaveSession(authstore.Session{
 		IssuerURL:     "https://issuer.example.com",
 		ClientID:      "client-123",
+		Audience:      authconfig.DefaultAudience,
 		Scopes:        []string{"openid", "profile"},
 		GrantedScopes: []string{"openid"},
 		AccessToken:   "old-access",
 		TokenType:     "Bearer",
 		Expiry:        time.Now().Add(-1 * time.Minute),
 		TokenURL:      server.URL,
+		JWKSURL:       "https://issuer.example.com/jwks",
+		Algorithms:    []string{"RS256"},
 	}))
 	_, err := authstore.SaveRefreshToken("refresh-token")
 	require.NoError(t, err)

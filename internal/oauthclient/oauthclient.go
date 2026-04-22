@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	callbackPath    = "/callback"
+	callbackPath    = "/oauth/callback"
 	callbackTimeout = 5 * time.Minute
 	httpTimeout     = 15 * time.Second
 )
@@ -74,6 +74,7 @@ type RefreshConfig struct {
 	Provider     ProviderMetadata
 	ClientID     string
 	RefreshToken string
+	Resource     string
 	HTTPClient   *http.Client
 }
 
@@ -179,6 +180,7 @@ func Login(ctx context.Context, cfg Config) (*LoginResult, error) {
 	}
 	if strings.TrimSpace(cfg.Audience) != "" {
 		authOptions = append(authOptions, oauth2.SetAuthURLParam("audience", cfg.Audience))
+		authOptions = append(authOptions, oauth2.SetAuthURLParam("resource", cfg.Audience))
 	}
 
 	authURL := oauthConfig.AuthCodeURL(state, authOptions...)
@@ -196,12 +198,15 @@ func Login(ctx context.Context, cfg Config) (*LoginResult, error) {
 		return nil, err
 	}
 
-	token, err := oauthConfig.Exchange(
-		ctx,
-		code,
+	exchangeOptions := []oauth2.AuthCodeOption{
 		oauth2.VerifierOption(verifier),
 		oauth2.SetAuthURLParam("client_id", cfg.ClientID),
-	)
+	}
+	if strings.TrimSpace(cfg.Audience) != "" {
+		exchangeOptions = append(exchangeOptions, oauth2.SetAuthURLParam("resource", cfg.Audience))
+	}
+
+	token, err := oauthConfig.Exchange(ctx, code, exchangeOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -257,6 +262,9 @@ func Refresh(ctx context.Context, cfg RefreshConfig) (*TokenSet, error) {
 	form.Set("grant_type", "refresh_token")
 	form.Set("refresh_token", cfg.RefreshToken)
 	form.Set("client_id", cfg.ClientID)
+	if strings.TrimSpace(cfg.Resource) != "" {
+		form.Set("resource", strings.TrimSpace(cfg.Resource))
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, cfg.Provider.TokenURL, strings.NewReader(form.Encode()))
 	if err != nil {

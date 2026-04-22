@@ -133,6 +133,7 @@ func refreshSession(ctx context.Context, resolved authconfig.Resolved) (*authsto
 			Provider:     providerMetadata,
 			ClientID:     current.ClientID,
 			RefreshToken: refreshToken,
+			Resource:     current.Audience,
 		})
 		if err != nil {
 			if oauthclient.IsInvalidGrant(err) {

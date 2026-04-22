@@ -51,11 +51,13 @@ func TestRequestOptionsInjectBearerTokenAndRemoveInheritedAPIKey(t *testing.T) {
 	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
 		IssuerURL: "https://issuer.example.com",
 		ClientID:  "client-123",
+		Audience:  authconfig.DefaultAudience,
 		Scopes:    []string{"openid", "profile"},
 	}))
 	require.NoError(t, authstore.SaveSession(authstore.Session{
 		IssuerURL:   "https://issuer.example.com",
 		ClientID:    "client-123",
+		Audience:    authconfig.DefaultAudience,
 		Scopes:      []string{"openid", "profile"},
 		AccessToken: "oauth-access",
 		TokenType:   "Bearer",

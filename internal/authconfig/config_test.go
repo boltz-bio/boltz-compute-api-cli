@@ -44,12 +44,20 @@ func TestResolvePrecedenceAndScopeReplacement(t *testing.T) {
 	require.Equal(t, SourceRuntime, resolved.Sources.SelectedOrg)
 }
 
-func TestResolveFallsBackToDefaultScopes(t *testing.T) {
+func TestResolveFallsBackToBoltzOAuthDefaults(t *testing.T) {
 	setUserDirs(t)
 
 	resolved := resolveForArgs(t)
-	require.Equal(t, DefaultScopes, resolved.Scopes)
+	require.Equal(t, DefaultIssuerURL, resolved.IssuerURL)
+	require.Equal(t, DefaultClientID, resolved.ClientID)
+	require.Equal(t, []string{"openid", "offline_access", "profile", "email", "compute:run"}, resolved.Scopes)
+	require.Equal(t, DefaultAudience, resolved.Audience)
+	require.Equal(t, DefaultListenPort, resolved.ListenPort)
+	require.Equal(t, SourceDefault, resolved.Sources.IssuerURL)
+	require.Equal(t, SourceDefault, resolved.Sources.ClientID)
 	require.Equal(t, SourceDefault, resolved.Sources.Scopes)
+	require.Equal(t, SourceDefault, resolved.Sources.Audience)
+	require.Equal(t, SourceDefault, resolved.Sources.ListenPort)
 }
 
 func TestSaveProfileWritesConfigVersion(t *testing.T) {

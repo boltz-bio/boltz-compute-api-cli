@@ -105,7 +105,7 @@ OAuth mode can also be configured with:
 - `--auth-issuer-url` - OIDC issuer URL used for OAuth login and bearer-token refresh
 - `--auth-client-id` - OAuth client ID for public-client login
 - `--auth-scope` - OAuth scope to request (repeatable)
-- `--auth-audience` - Optional OAuth audience
+- `--auth-audience` - OAuth audience/resource to request for compute access
 - `--auth-authorization-url` - Override the discovered authorization endpoint
 - `--auth-token-url` - Override the discovered token endpoint
 - `--auth-userinfo-url` - Override the discovered userinfo endpoint
@@ -127,18 +127,27 @@ human login flow with local state, refresh, and browser/loopback behavior.
 Start a login flow with:
 
 ```sh
-boltz-api auth login \
-  --auth-issuer-url 'https://issuer.example.com' \
-  --auth-client-id 'public-client-id'
+boltz-api auth login
 ```
 
 For remote or headless usage, print the URL instead of opening a browser:
 
 ```sh
-boltz-api auth login \
-  --no-browser \
-  --auth-issuer-url 'https://issuer.example.com' \
-  --auth-client-id 'public-client-id'
+boltz-api auth login --no-browser
+```
+
+By default, OAuth login uses Boltz's first-party OAuth configuration:
+
+- issuer: `https://lab.boltz.bio`
+- client ID: `boltz-cli`
+- scopes: `openid offline_access profile email compute:run`
+- audience/resource: `boltz-compute-api`
+- loopback callback: `http://127.0.0.1:8421/oauth/callback`
+
+For local development against a locally running Lab backend, override the issuer:
+
+```sh
+BOLTZ_COMPUTE_AUTH_ISSUER_URL='http://localhost:3000' boltz-api auth login
 ```
 
 Available auth commands:

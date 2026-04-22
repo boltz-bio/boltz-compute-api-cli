@@ -28,6 +28,14 @@ const (
 
 var DefaultScopes = []string{"openid", "offline_access", "profile", "email"}
 
+const (
+	DefaultIssuerURL  = "https://lab.boltz.bio"
+	DefaultClientID   = "boltz-cli"
+	DefaultAudience   = "boltz-compute-api"
+	DefaultListenPort = 8421
+	DefaultScope      = "compute:run"
+)
+
 type Source string
 
 const (
@@ -118,16 +126,28 @@ func Resolve(cmd *cli.Command) (Resolved, error) {
 
 	apiKey, apiKeySource := resolveAPIKey(root)
 	issuerURL, issuerSource := resolveString(root, config.IssuerURL, "auth-issuer-url")
+	if issuerURL == "" {
+		issuerURL = DefaultIssuerURL
+		issuerSource = SourceDefault
+	}
 	clientID, clientIDSource := resolveString(root, config.ClientID, "auth-client-id")
+	if clientID == "" {
+		clientID = DefaultClientID
+		clientIDSource = SourceDefault
+	}
 	scopes, scopesSource := resolveScopes(root, config.Scopes)
 	audience, audienceSource := resolveString(root, config.Audience, "auth-audience")
+	if audience == "" {
+		audience = DefaultAudience
+		audienceSource = SourceDefault
+	}
 	authorizationURL, authorizationSource := resolveString(root, config.AuthorizationURL, "auth-authorization-url")
 	tokenURL, tokenURLSource := resolveString(root, config.TokenURL, "auth-token-url")
 	userInfoURL, userInfoURLSource := resolveString(root, config.UserInfoURL, "auth-userinfo-url")
 	revocationURL, revocationSource := resolveString(root, config.RevocationURL, "auth-revocation-url")
 	selectedOrg, selectedOrgSource := resolveString(root, config.SelectedOrg, "org")
 	noBrowser, noBrowserSource := resolveBool(root, false, "no-browser")
-	listenPort, listenPortSource := resolveInt(root, 0, "listen-port")
+	listenPort, listenPortSource := resolveInt(root, DefaultListenPort, "listen-port")
 
 	return Resolved{
 		APIKey:           apiKey,
@@ -247,7 +267,7 @@ func resolveScopes(root *cli.Command, fallback []string) ([]string, Source) {
 	if len(scopes) > 0 {
 		return scopes, SourceConfig
 	}
-	return slices.Clone(DefaultScopes), SourceDefault
+	return append(slices.Clone(DefaultScopes), DefaultScope), SourceDefault
 }
 
 func normalizeScopes(scopes []string) []string {
