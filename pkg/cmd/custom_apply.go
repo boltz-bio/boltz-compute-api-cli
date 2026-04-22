@@ -44,6 +44,10 @@ func ApplyCustomizations(app *cli.Command) {
 		app.Commands = append(app.Commands, downloadResultsCommand)
 	}
 
+	if !hasCommand(app.Commands, downloadStatusCommand.Name) {
+		app.Commands = append(app.Commands, downloadStatusCommand)
+	}
+
 	customizeCommandTree(app)
 }
 

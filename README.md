@@ -180,6 +180,27 @@ Refresh tokens are stored in the OS keychain when available, with a fallback to:
 
 - `~/.config/boltz-compute/credentials.json`
 
+### Local download helpers
+
+`download-results` creates or resumes a local run directory under `boltz-experiments/` and checkpoints progress in `.boltz-run.json`.
+
+Examples:
+
+```sh
+boltz-api download-results --id pred_123 --name example-run
+boltz-api download-results --name example-run
+boltz-api download-results --id prot_des_123 --name batch-run
+boltz-api download-results --id pred_123 --name human-run --progress-format text --verbose
+```
+
+Use `download-status` to read the local checkpoint without making API calls:
+
+```sh
+boltz-api --format json download-status --name example-run
+```
+
+By default, `download-results` emits machine-readable JSON Lines progress events on stderr while stdout still prints the final run directory. Use `--progress-format text --verbose` for human-readable progress logs instead.
+
 ### Passing files as arguments
 
 To inline file contents into request values, you can use the `@myfile.ext`
