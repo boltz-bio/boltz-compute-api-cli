@@ -226,6 +226,8 @@ func init() {
 		HideHelpCommand: true,
 	}
 
+	// Temporary Stainless seam: register custom commands, flags, and tree-level
+	// post-processing in one place.
 	ApplyCustomizations(Command)
 }
 
