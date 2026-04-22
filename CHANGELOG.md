@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.4 (2026-04-22)
+
+Full Changelog: [v0.5.3...v0.5.4](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.5.3...v0.5.4)
+
+### Bug Fixes
+
+* **cli:** drop legacy run and screen ids ([3d65b17](https://github.com/boltz-bio/boltz-compute-api-cli/commit/3d65b1755ef00f2663672def596eec1420886d29))
+* **cli:** require --id for download-results ([6f266c7](https://github.com/boltz-bio/boltz-compute-api-cli/commit/6f266c7a4d8202f39822f7113f1bbda78b063f82))
+
 ## 0.5.3 (2026-04-22)
 
 Full Changelog: [v0.5.2...v0.5.3](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.5.2...v0.5.3)
