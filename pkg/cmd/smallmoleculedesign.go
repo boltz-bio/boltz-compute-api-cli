@@ -89,7 +89,7 @@ var smallMoleculeDesignEstimateCost = requestflag.WithInnerFlags(cli.Command{
 	Flags: []cli.Flag{
 		&requestflag.Flag[int64]{
 			Name:     "num-molecules",
-			Usage:    "Number of molecules to generate",
+			Usage:    "Number of molecules to generate. Must be between 10 and 1,000,000.",
 			Required: true,
 			BodyPath: "num_molecules",
 		},
@@ -211,7 +211,7 @@ var smallMoleculeDesignStart = requestflag.WithInnerFlags(cli.Command{
 	Flags: []cli.Flag{
 		&requestflag.Flag[int64]{
 			Name:     "num-molecules",
-			Usage:    "Number of molecules to generate",
+			Usage:    "Number of molecules to generate. Must be between 10 and 1,000,000.",
 			Required: true,
 			BodyPath: "num_molecules",
 		},
