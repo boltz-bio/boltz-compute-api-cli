@@ -34,6 +34,11 @@ func TestDownloadResultsCommandValidation(t *testing.T) {
 		wantErr string
 	}{
 		{
+			name:    "positional id requires flag",
+			args:    []string{"download-results", "pred_123"},
+			wantErr: "Use --id for the run ID",
+		},
+		{
 			name:    "extra positional arguments",
 			args:    []string{"download-results", "pred_123", "unexpected"},
 			wantErr: "Unexpected extra arguments",
@@ -125,7 +130,7 @@ func TestPredictionDownloadResultsQuietOutput(t *testing.T) {
 		"--base-url", server.URL,
 		"--api-key", "test-key",
 		"download-results",
-		"pred_123",
+		"--id", "pred_123",
 		"--name", "prediction-run",
 	)
 	require.NoError(t, err)

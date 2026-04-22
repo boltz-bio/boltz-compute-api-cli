@@ -347,12 +347,8 @@ func handleDownloadResults(ctx context.Context, cmd *cli.Command) error {
 func parseDownloadResultsSpec(cmd *cli.Command) (downloadResultsSpec, error) {
 	unusedArgs := cmd.Args().Slice()
 	id := trimOptionalString(cmd.String("id"))
-	if id == nil && len(unusedArgs) > 0 {
-		id = trimOptionalString(unusedArgs[0])
-		unusedArgs = unusedArgs[1:]
-	}
 	if len(unusedArgs) > 0 {
-		return downloadResultsSpec{}, fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
+		return downloadResultsSpec{}, fmt.Errorf("Unexpected extra arguments: %v. Use --id for the run ID.", unusedArgs)
 	}
 
 	name := trimOptionalString(cmd.String("name"))
