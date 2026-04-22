@@ -15,7 +15,7 @@ func TestProteinDesignRetrieve(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:design", "retrieve",
-			"--run-id", "run_id",
+			"--id", "id",
 			"--workspace-id", "workspace_id",
 		)
 	})
@@ -44,7 +44,7 @@ func TestProteinDesignDeleteData(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:design", "delete-data",
-			"--run-id", "run_id",
+			"--id", "id",
 		)
 	})
 }
@@ -149,7 +149,7 @@ func TestProteinDesignListResults(t *testing.T) {
 			"--api-key", "string",
 			"protein:design", "list-results",
 			"--max-items", "10",
-			"--run-id", "run_id",
+			"--id", "id",
 			"--after-id", "after_id",
 			"--before-id", "before_id",
 			"--limit", "1",
@@ -257,7 +257,7 @@ func TestProteinDesignStop(t *testing.T) {
 			t,
 			"--api-key", "string",
 			"protein:design", "stop",
-			"--run-id", "run_id",
+			"--id", "id",
 		)
 	})
 }

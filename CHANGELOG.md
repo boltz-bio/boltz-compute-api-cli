@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.3 (2026-04-22)
+
+Full Changelog: [v0.5.2...v0.5.3](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.5.2...v0.5.3)
+
+### Bug Fixes
+
+* **compute-api:** replace unsafe application schema ([6790940](https://github.com/boltz-bio/boltz-compute-api-cli/commit/679094016e8a844e8c298580dd02a617db337ec0))
+
 ## 0.5.2 (2026-04-22)
 
 Full Changelog: [v0.5.1...v0.5.2](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.5.1...v0.5.2)
