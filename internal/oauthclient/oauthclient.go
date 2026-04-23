@@ -22,9 +22,11 @@ import (
 )
 
 const (
-	callbackPath    = "/oauth/callback"
-	callbackTimeout = 5 * time.Minute
-	httpTimeout     = 15 * time.Second
+	callbackPath          = "/oauth/callback"
+	callbackTimeout       = 5 * time.Minute
+	deviceCodeGrantType   = "urn:ietf:params:oauth:grant-type:device_code"
+	devicePollingMaxDelay = 30 * time.Second
+	httpTimeout           = 15 * time.Second
 )
 
 var openBrowser = defaultOpenBrowser
@@ -42,16 +44,18 @@ type Config struct {
 	NoBrowser        bool
 	HTTPClient       *http.Client
 	Output           io.Writer
+	OnDeviceCode     func(DeviceAuthorization)
 }
 
 type ProviderMetadata struct {
-	IssuerURL        string
-	AuthorizationURL string
-	TokenURL         string
-	UserInfoURL      string
-	RevocationURL    string
-	JWKSURL          string
-	Algorithms       []string
+	IssuerURL              string
+	AuthorizationURL       string
+	DeviceAuthorizationURL string
+	TokenURL               string
+	UserInfoURL            string
+	RevocationURL          string
+	JWKSURL                string
+	Algorithms             []string
 }
 
 type TokenSet struct {
@@ -68,6 +72,14 @@ type LoginResult struct {
 	Tokens           TokenSet
 	Identity         authstore.Identity
 	AuthorizationURL string
+}
+
+type DeviceAuthorization struct {
+	VerificationURI         string
+	VerificationURIComplete string
+	UserCode                string
+	ExpiresIn               int64
+	Interval                int64
 }
 
 type RefreshConfig struct {
@@ -87,13 +99,14 @@ type RevokeConfig struct {
 }
 
 type discoveryDocument struct {
-	IssuerURL        string   `json:"issuer"`
-	AuthorizationURL string   `json:"authorization_endpoint"`
-	TokenURL         string   `json:"token_endpoint"`
-	UserInfoURL      string   `json:"userinfo_endpoint"`
-	RevocationURL    string   `json:"revocation_endpoint"`
-	JWKSURL          string   `json:"jwks_uri"`
-	Algorithms       []string `json:"id_token_signing_alg_values_supported"`
+	IssuerURL              string   `json:"issuer"`
+	AuthorizationURL       string   `json:"authorization_endpoint"`
+	DeviceAuthorizationURL string   `json:"device_authorization_endpoint"`
+	TokenURL               string   `json:"token_endpoint"`
+	UserInfoURL            string   `json:"userinfo_endpoint"`
+	RevocationURL          string   `json:"revocation_endpoint"`
+	JWKSURL                string   `json:"jwks_uri"`
+	Algorithms             []string `json:"id_token_signing_alg_values_supported"`
 }
 
 type callbackResult struct {
@@ -110,6 +123,17 @@ type tokenResponse struct {
 	Scope            string `json:"scope"`
 	ErrorCode        string `json:"error"`
 	ErrorDescription string `json:"error_description"`
+}
+
+type deviceAuthorizationResponse struct {
+	DeviceCode              string `json:"device_code"`
+	UserCode                string `json:"user_code"`
+	VerificationURI         string `json:"verification_uri"`
+	VerificationURIComplete string `json:"verification_uri_complete"`
+	ExpiresIn               int64  `json:"expires_in"`
+	Interval                int64  `json:"interval"`
+	ErrorCode               string `json:"error"`
+	ErrorDescription        string `json:"error_description"`
 }
 
 type TokenError struct {
@@ -233,6 +257,85 @@ func Login(ctx context.Context, cfg Config) (*LoginResult, error) {
 		Tokens:           tokens,
 		Identity:         identity,
 		AuthorizationURL: authURL,
+	}, nil
+}
+
+func DeviceLogin(ctx context.Context, cfg Config) (*LoginResult, error) {
+	if strings.TrimSpace(cfg.IssuerURL) == "" {
+		return nil, fmt.Errorf("issuer URL is required")
+	}
+	if strings.TrimSpace(cfg.ClientID) == "" {
+		return nil, fmt.Errorf("client ID is required")
+	}
+
+	httpClient := resolveHTTPClient(cfg.HTTPClient)
+	ctx = oidc.ClientContext(ctx, httpClient)
+
+	providerMetadata, provider, err := discoverProvider(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+	if strings.TrimSpace(providerMetadata.DeviceAuthorizationURL) == "" {
+		return nil, fmt.Errorf("provider discovery did not return a device authorization endpoint")
+	}
+	if strings.TrimSpace(providerMetadata.TokenURL) == "" {
+		return nil, fmt.Errorf("provider discovery did not return a token endpoint")
+	}
+
+	device, err := requestDeviceAuthorization(ctx, httpClient, providerMetadata.DeviceAuthorizationURL, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.OnDeviceCode != nil {
+		cfg.OnDeviceCode(DeviceAuthorization{
+			VerificationURI:         strings.TrimSpace(device.VerificationURI),
+			VerificationURIComplete: strings.TrimSpace(device.VerificationURIComplete),
+			UserCode:                strings.TrimSpace(device.UserCode),
+			ExpiresIn:               device.ExpiresIn,
+			Interval:                device.Interval,
+		})
+	}
+
+	verificationURL := strings.TrimSpace(device.VerificationURIComplete)
+	if verificationURL == "" {
+		verificationURL = strings.TrimSpace(device.VerificationURI)
+	}
+	if cfg.Output != nil {
+		fmt.Fprintf(cfg.Output, "Open this URL to authenticate:\n%s\n", verificationURL)
+		if strings.TrimSpace(device.UserCode) != "" {
+			fmt.Fprintf(cfg.Output, "Enter this code:\n%s\n", device.UserCode)
+		}
+	}
+	if !cfg.NoBrowser && verificationURL != "" {
+		if err := openBrowser(verificationURL); err != nil && cfg.Output != nil {
+			fmt.Fprintf(cfg.Output, "Could not open browser automatically: %v\n", err)
+		}
+	}
+
+	tokens, err := pollDeviceToken(ctx, httpClient, providerMetadata.TokenURL, cfg, device)
+	if err != nil {
+		return nil, err
+	}
+
+	var idToken *oidc.IDToken
+	if tokens.IDToken != "" {
+		idToken, err = verifyIDToken(ctx, provider, cfg.ClientID, tokens.IDToken)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	identity, err := resolveIdentity(ctx, provider, tokens.AccessToken, idToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginResult{
+		Provider:         providerMetadata,
+		Tokens:           *tokens,
+		Identity:         identity,
+		AuthorizationURL: verificationURL,
 	}, nil
 }
 
@@ -390,13 +493,14 @@ func discoverProvider(ctx context.Context, cfg Config) (ProviderMetadata, *oidc.
 	}
 
 	metadata := ProviderMetadata{
-		IssuerURL:        strings.TrimSpace(claims.IssuerURL),
-		AuthorizationURL: strings.TrimSpace(endpoint.AuthURL),
-		TokenURL:         strings.TrimSpace(endpoint.TokenURL),
-		UserInfoURL:      strings.TrimSpace(provider.UserInfoEndpoint()),
-		RevocationURL:    strings.TrimSpace(claims.RevocationURL),
-		JWKSURL:          strings.TrimSpace(claims.JWKSURL),
-		Algorithms:       append([]string(nil), claims.Algorithms...),
+		IssuerURL:              strings.TrimSpace(claims.IssuerURL),
+		AuthorizationURL:       strings.TrimSpace(endpoint.AuthURL),
+		DeviceAuthorizationURL: strings.TrimSpace(claims.DeviceAuthorizationURL),
+		TokenURL:               strings.TrimSpace(endpoint.TokenURL),
+		UserInfoURL:            strings.TrimSpace(provider.UserInfoEndpoint()),
+		RevocationURL:          strings.TrimSpace(claims.RevocationURL),
+		JWKSURL:                strings.TrimSpace(claims.JWKSURL),
+		Algorithms:             append([]string(nil), claims.Algorithms...),
 	}
 	if metadata.IssuerURL == "" {
 		metadata.IssuerURL = strings.TrimSpace(cfg.IssuerURL)
@@ -416,6 +520,150 @@ func discoverProvider(ctx context.Context, cfg Config) (ProviderMetadata, *oidc.
 
 	provider = providerFromMetadata(ctx, metadata)
 	return metadata, provider, nil
+}
+
+func requestDeviceAuthorization(ctx context.Context, client *http.Client, endpoint string, cfg Config) (*deviceAuthorizationResponse, error) {
+	form := url.Values{}
+	form.Set("client_id", cfg.ClientID)
+	if len(cfg.Scopes) > 0 {
+		form.Set("scope", strings.Join(cfg.Scopes, " "))
+	}
+	if strings.TrimSpace(cfg.Audience) != "" {
+		form.Set("resource", strings.TrimSpace(cfg.Audience))
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var decoded deviceAuthorizationResponse
+	if len(body) > 0 {
+		_ = json.Unmarshal(body, &decoded)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, &TokenError{
+			StatusCode:       resp.StatusCode,
+			ErrorCode:        decoded.ErrorCode,
+			ErrorDescription: decoded.ErrorDescription,
+		}
+	}
+	if strings.TrimSpace(decoded.DeviceCode) == "" {
+		return nil, fmt.Errorf("device authorization response did not include a device code")
+	}
+	if strings.TrimSpace(decoded.VerificationURI) == "" && strings.TrimSpace(decoded.VerificationURIComplete) == "" {
+		return nil, fmt.Errorf("device authorization response did not include a verification URL")
+	}
+	return &decoded, nil
+}
+
+func pollDeviceToken(ctx context.Context, client *http.Client, endpoint string, cfg Config, device *deviceAuthorizationResponse) (*TokenSet, error) {
+	interval := time.Duration(device.Interval) * time.Second
+	if interval <= 0 {
+		interval = 5 * time.Second
+	}
+	expiresIn := time.Duration(device.ExpiresIn) * time.Second
+	if expiresIn <= 0 {
+		expiresIn = callbackTimeout
+	}
+
+	pollCtx, cancel := context.WithTimeout(ctx, expiresIn)
+	defer cancel()
+
+	for {
+		tokens, err := exchangeDeviceCode(pollCtx, client, endpoint, cfg, device.DeviceCode)
+		if err == nil {
+			return tokens, nil
+		}
+
+		var tokenErr *TokenError
+		if !errors.As(err, &tokenErr) {
+			return nil, err
+		}
+
+		switch tokenErr.ErrorCode {
+		case "authorization_pending":
+			// Expected while the user is still approving the code.
+		case "slow_down":
+			interval += time.Duration(device.Interval) * time.Second
+			if interval > devicePollingMaxDelay {
+				interval = devicePollingMaxDelay
+			}
+		default:
+			return nil, err
+		}
+
+		select {
+		case <-time.After(interval):
+		case <-pollCtx.Done():
+			return nil, fmt.Errorf("timed out waiting for device authorization")
+		}
+	}
+}
+
+func exchangeDeviceCode(ctx context.Context, client *http.Client, endpoint string, cfg Config, deviceCode string) (*TokenSet, error) {
+	form := url.Values{}
+	form.Set("grant_type", deviceCodeGrantType)
+	form.Set("client_id", cfg.ClientID)
+	form.Set("device_code", deviceCode)
+	if strings.TrimSpace(cfg.Audience) != "" {
+		form.Set("resource", strings.TrimSpace(cfg.Audience))
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, strings.NewReader(form.Encode()))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var decoded tokenResponse
+	if len(body) > 0 {
+		_ = json.Unmarshal(body, &decoded)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, &TokenError{
+			StatusCode:       resp.StatusCode,
+			ErrorCode:        decoded.ErrorCode,
+			ErrorDescription: decoded.ErrorDescription,
+		}
+	}
+
+	tokens := TokenSet{
+		AccessToken:   strings.TrimSpace(decoded.AccessToken),
+		RefreshToken:  strings.TrimSpace(decoded.RefreshToken),
+		TokenType:     strings.TrimSpace(decoded.TokenType),
+		IDToken:       strings.TrimSpace(decoded.IDToken),
+		GrantedScopes: parseScopes(decoded.Scope),
+	}
+	if decoded.ExpiresIn > 0 {
+		tokens.Expiry = time.Now().UTC().Add(time.Duration(decoded.ExpiresIn) * time.Second)
+	}
+	return &tokens, nil
 }
 
 func providerFromMetadata(ctx context.Context, metadata ProviderMetadata) *oidc.Provider {
