@@ -79,6 +79,39 @@ func TestLoginHonorsAuthorizationOverrideAndKeepsWorkingIfBrowserOpenFails(t *te
 	require.Equal(t, "userinfo@example.com", result.Identity.Email)
 }
 
+func TestDeviceLoginPrintsCodeAndPollsTokenEndpoint(t *testing.T) {
+	provider := newMockOIDCProvider(t, true)
+	defer provider.Close()
+
+	originalOpenBrowser := openBrowser
+	openBrowser = func(target string) error {
+		require.Equal(t, provider.IssuerURL()+"/device?user_code=WDJB-MJHT", target)
+		return nil
+	}
+	t.Cleanup(func() { openBrowser = originalOpenBrowser })
+
+	var output bytes.Buffer
+	result, err := DeviceLogin(context.Background(), Config{
+		IssuerURL: provider.IssuerURL(),
+		ClientID:  "client-123",
+		Scopes:    []string{"openid", "profile", "email", "offline_access", "compute:run"},
+		Audience:  "boltz-compute-api",
+		Output:    &output,
+	})
+	require.NoError(t, err)
+	require.Equal(t, "login-access", result.Tokens.AccessToken)
+	require.Equal(t, "login-refresh", result.Tokens.RefreshToken)
+	require.Equal(t, []string{"openid", "email"}, result.Tokens.GrantedScopes)
+	require.Equal(t, "userinfo@example.com", result.Identity.Email)
+	require.Contains(t, output.String(), provider.IssuerURL()+"/device?user_code=WDJB-MJHT")
+	require.Contains(t, output.String(), "WDJB-MJHT")
+	require.Equal(t, "client-123", provider.LastDeviceAuthorizationForm().Get("client_id"))
+	require.Equal(t, "boltz-compute-api", provider.LastDeviceAuthorizationForm().Get("resource"))
+	require.Equal(t, deviceCodeGrantType, provider.LastTokenForm().Get("grant_type"))
+	require.Equal(t, "device-code-123", provider.LastTokenForm().Get("device_code"))
+	require.Equal(t, "boltz-compute-api", provider.LastTokenForm().Get("resource"))
+}
+
 func TestRefreshReturnsRotatedTokens(t *testing.T) {
 	provider := newMockOIDCProvider(t, true)
 	defer provider.Close()
@@ -147,6 +180,7 @@ type mockOIDCProvider struct {
 	lastNonce              string
 	lastAuthorizationPath  string
 	lastAuthorizationQuery url.Values
+	lastDeviceForm         url.Values
 	lastTokenForm          url.Values
 	lastRevocation         url.Values
 }
@@ -184,6 +218,7 @@ func newMockOIDCProvider(t *testing.T, includeUserInfo bool) *mockOIDCProvider {
 	mux.HandleFunc("/.well-known/openid-configuration", provider.handleDiscovery)
 	mux.HandleFunc("/authorize-default", provider.handleAuthorize)
 	mux.HandleFunc("/authorize-override", provider.handleAuthorize)
+	mux.HandleFunc("/device-code", provider.handleDeviceAuthorization)
 	mux.HandleFunc("/token", provider.handleToken)
 	mux.HandleFunc("/jwks", provider.handleJWKS)
 	mux.HandleFunc("/userinfo", provider.handleUserInfo)
@@ -219,6 +254,12 @@ func (p *mockOIDCProvider) LastTokenForm() url.Values {
 	return cloneValues(p.lastTokenForm)
 }
 
+func (p *mockOIDCProvider) LastDeviceAuthorizationForm() url.Values {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return cloneValues(p.lastDeviceForm)
+}
+
 func (p *mockOIDCProvider) LastRevocation() url.Values {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -229,6 +270,7 @@ func (p *mockOIDCProvider) handleDiscovery(w http.ResponseWriter, r *http.Reques
 	document := map[string]any{
 		"issuer":                                p.server.URL,
 		"authorization_endpoint":                p.server.URL + "/authorize-default",
+		"device_authorization_endpoint":         p.server.URL + "/device-code",
 		"token_endpoint":                        p.server.URL + "/token",
 		"jwks_uri":                              p.server.URL + "/jwks",
 		"id_token_signing_alg_values_supported": []string{"RS256"},
@@ -243,6 +285,29 @@ func (p *mockOIDCProvider) handleDiscovery(w http.ResponseWriter, r *http.Reques
 		p.t.Errorf("encode discovery response: %v", err)
 	}
 	_ = r
+}
+
+func (p *mockOIDCProvider) handleDeviceAuthorization(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		p.t.Errorf("parse device authorization form: %v", err)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	p.mu.Lock()
+	p.lastDeviceForm = cloneValues(r.PostForm)
+	p.mu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"device_code":               "device-code-123",
+		"user_code":                 "WDJB-MJHT",
+		"verification_uri":          p.server.URL + "/device",
+		"verification_uri_complete": p.server.URL + "/device?user_code=WDJB-MJHT",
+		"expires_in":                600,
+		"interval":                  1,
+	}); err != nil {
+		p.t.Errorf("encode device authorization response: %v", err)
+	}
 }
 
 func (p *mockOIDCProvider) handleAuthorize(w http.ResponseWriter, r *http.Request) {
@@ -288,6 +353,15 @@ func (p *mockOIDCProvider) handleToken(w http.ResponseWriter, r *http.Request) {
 			"expires_in":    3600,
 			"scope":         "openid email",
 			"id_token":      p.mustSignIDToken("client-123", p.currentNonce()),
+		}
+	case deviceCodeGrantType:
+		require.Equal(p.t, "device-code-123", r.PostForm.Get("device_code"))
+		response = map[string]any{
+			"access_token":  "login-access",
+			"refresh_token": "login-refresh",
+			"token_type":    "Bearer",
+			"expires_in":    3600,
+			"scope":         "openid email",
 		}
 	case "refresh_token":
 		response = map[string]any{

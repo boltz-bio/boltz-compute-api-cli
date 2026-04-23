@@ -244,6 +244,16 @@ func TestAuthLoginDoesNotPersistProfileOnFailure(t *testing.T) {
 	require.Empty(t, config.ClientID)
 }
 
+func TestAuthLoginJSONEventsRequiresDeviceCode(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+
+	_, err := runAuthCommand(t, "auth", "login", "--json-events")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "--json-events")
+	require.Contains(t, err.Error(), "--device-code")
+}
+
 func runAuthCommand(t *testing.T, args ...string) (string, error) {
 	t.Helper()
 

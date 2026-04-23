@@ -35,6 +35,16 @@ var authCommand = &cli.Command{
 			Usage:           "Run the OAuth login flow and persist the resulting session",
 			Action:          handleAuthLogin,
 			HideHelpCommand: true,
+			Flags: []cli.Flag{
+				&cli.BoolFlag{
+					Name:  "device-code",
+					Usage: "Use OAuth device authorization instead of a localhost browser callback",
+				},
+				&cli.BoolFlag{
+					Name:  "json-events",
+					Usage: "Emit newline-delimited JSON progress events for device-code login",
+				},
+			},
 		},
 		{
 			Name:            "logout",
@@ -177,8 +187,14 @@ func handleAuthLogin(ctx context.Context, cmd *cli.Command) error {
 	if strings.TrimSpace(resolved.ClientID) == "" {
 		return autherror.New("missing_client_id", "OAuth client ID is required", "Set `--auth-client-id` or `BOLTZ_COMPUTE_AUTH_CLIENT_ID`.")
 	}
+	if cmd.Bool("json-events") && !cmd.Bool("device-code") {
+		return autherror.New("unsupported_login_output", "`--json-events` requires `--device-code`", "Use `boltz-api auth login --device-code --json-events`.")
+	}
 
-	result, err := oauthclient.Login(ctx, oauthclient.Config{
+	writer := commandWriter(cmd)
+	jsonEvents := newAuthLoginEventWriter(writer, cmd.Bool("json-events"))
+
+	loginConfig := oauthclient.Config{
 		IssuerURL:        resolved.IssuerURL,
 		ClientID:         resolved.ClientID,
 		Scopes:           resolved.Scopes,
@@ -189,8 +205,19 @@ func handleAuthLogin(ctx context.Context, cmd *cli.Command) error {
 		RevocationURL:    resolved.RevocationURL,
 		ListenPort:       resolved.ListenPort,
 		NoBrowser:        resolved.NoBrowser,
-		Output:           commandWriter(cmd),
-	})
+		Output:           writer,
+		OnDeviceCode:     jsonEvents.deviceCode,
+	}
+	if jsonEvents.enabled {
+		loginConfig.Output = nil
+	}
+
+	var result *oauthclient.LoginResult
+	if cmd.Bool("device-code") {
+		result, err = oauthclient.DeviceLogin(ctx, loginConfig)
+	} else {
+		result, err = oauthclient.Login(ctx, loginConfig)
+	}
 	if err != nil {
 		return autherror.New("login_failed", "OAuth login failed", err.Error())
 	}
@@ -262,11 +289,66 @@ func handleAuthLogin(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	fmt.Fprintln(commandWriter(cmd), "Authentication successful.")
+	if jsonEvents.enabled {
+		if err := jsonEvents.write(map[string]any{"event": "success"}); err != nil {
+			return err
+		}
+		if strings.TrimSpace(resolved.APIKey) != "" {
+			return jsonEvents.write(map[string]any{
+				"event":   "warning",
+				"message": "API-key mode is still active for commands in this shell. Clear `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use the stored OAuth session.",
+			})
+		}
+		return nil
+	}
+
+	fmt.Fprintln(writer, "Authentication successful.")
 	if strings.TrimSpace(resolved.APIKey) != "" {
-		fmt.Fprintln(commandWriter(cmd), "API-key mode is still active for commands in this shell. Clear `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use the stored OAuth session.")
+		fmt.Fprintln(writer, "API-key mode is still active for commands in this shell. Clear `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use the stored OAuth session.")
 	}
 	return nil
+}
+
+type authLoginEventWriter struct {
+	encoder *json.Encoder
+	enabled bool
+}
+
+func newAuthLoginEventWriter(w io.Writer, enabled bool) authLoginEventWriter {
+	if !enabled {
+		return authLoginEventWriter{}
+	}
+	return authLoginEventWriter{
+		encoder: json.NewEncoder(w),
+		enabled: true,
+	}
+}
+
+func (w authLoginEventWriter) deviceCode(device oauthclient.DeviceAuthorization) {
+	if !w.enabled {
+		return
+	}
+
+	url := strings.TrimSpace(device.VerificationURIComplete)
+	if url == "" {
+		url = strings.TrimSpace(device.VerificationURI)
+	}
+	_ = w.write(map[string]any{
+		"event":                     "auth_url",
+		"url":                       url,
+		"verification_uri":          strings.TrimSpace(device.VerificationURI),
+		"verification_uri_complete": strings.TrimSpace(device.VerificationURIComplete),
+		"user_code":                 strings.TrimSpace(device.UserCode),
+		"expires_in":                device.ExpiresIn,
+		"interval":                  device.Interval,
+	})
+}
+
+func (w authLoginEventWriter) write(event map[string]any) error {
+	if !w.enabled {
+		return nil
+	}
+	return w.encoder.Encode(event)
 }
 
 func handleAuthLogout(ctx context.Context, cmd *cli.Command) error {

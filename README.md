@@ -136,6 +136,20 @@ For remote or headless usage, print the URL instead of opening a browser:
 boltz-api auth login --no-browser
 ```
 
+For agent or MCP subprocess usage where a localhost callback is not practical,
+use OAuth device authorization:
+
+```sh
+boltz-api auth login --device-code
+```
+
+Machine callers can request newline-delimited JSON events and surface the
+`auth_url` event to the user:
+
+```sh
+boltz-api auth login --device-code --json-events
+```
+
 By default, OAuth login uses Boltz's first-party OAuth configuration:
 
 - issuer: `https://lab.boltz.bio`
