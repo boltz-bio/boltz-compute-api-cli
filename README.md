@@ -183,6 +183,8 @@ Refresh tokens are stored in the OS keychain when available, with a fallback to:
 ### Local download helpers
 
 `download-results` creates or resumes a local run directory under `boltz-experiments/` and checkpoints progress in `.boltz-run.json`.
+It also writes a sanitized `run.json` for the remote run. Pipeline downloads include `results/<result-id>/metadata.json`
+for each result and a `results/index.jsonl` manifest with one result per line plus local artifact paths.
 
 Structure prediction run IDs now use the `sab_pred` prefix. Historical `pred_` IDs are still supported.
 

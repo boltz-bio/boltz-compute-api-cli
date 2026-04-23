@@ -161,6 +161,17 @@ func TestPredictionDownloadResultsDefaultProgressJSONL(t *testing.T) {
 	assert.EqualValues(t, 1, archiveRequests.Load())
 	assert.FileExists(t, filepath.Join(runDir, "outputs", "archive.tar.gz"))
 	assert.FileExists(t, filepath.Join(runDir, "outputs", "files", "nested", "output.txt"))
+
+	run := readDownloadResultsTestJSON(t, filepath.Join(runDir, "run.json"))
+	assert.Equal(t, "pred_123", run["id"])
+	input, ok := run["input"].(map[string]any)
+	require.True(t, ok)
+	entities, ok := input["entities"].([]any)
+	require.True(t, ok)
+	require.NotEmpty(t, entities)
+	runBody, err := os.ReadFile(filepath.Join(runDir, "run.json"))
+	require.NoError(t, err)
+	assert.NotContains(t, string(runBody), server.URL)
 }
 
 func TestPredictionDownloadResultsUsesExistingDirectoryWithoutMetadata(t *testing.T) {
@@ -406,7 +417,12 @@ func TestPipelineDownloadResultsHappyPathAllRunTypes(t *testing.T) {
 			cwd := t.TempDir()
 			t.Chdir(cwd)
 
-			archiveBytes := makeTarGzArchive(t, map[string]string{"result.txt": testCase.name})
+			archiveBytes := makeTarGzArchive(t, map[string]string{
+				"result.txt":                     testCase.name,
+				"result/metrics.json":            `{"score":0.99}`,
+				"result/predicted_structure.cif": "data_test\n#\n",
+				"result/pae.npz":                 "pae",
+			})
 			var server *httptest.Server
 			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.URL.Path {
@@ -443,8 +459,29 @@ func TestPipelineDownloadResultsHappyPathAllRunTypes(t *testing.T) {
 			assert.NotEmpty(t, stderr)
 			assert.FileExists(t, filepath.Join(runDir, "results", "res_1", "archive.tar.gz"))
 			assert.FileExists(t, filepath.Join(runDir, "results", "res_1", "files", "result.txt"))
+			assert.FileExists(t, filepath.Join(runDir, "results", "res_1", "metadata.json"))
 			assert.FileExists(t, filepath.Join(runDir, "results", "res_2", "archive.tar.gz"))
 			assert.FileExists(t, filepath.Join(runDir, "results", "res_2", "files", "result.txt"))
+			assert.FileExists(t, filepath.Join(runDir, "run.json"))
+
+			metadata := readDownloadResultsTestJSON(t, filepath.Join(runDir, "results", "res_1", "metadata.json"))
+			assert.Equal(t, "res_1", metadata["id"])
+			assert.NotContains(t, metadata, "artifacts")
+			assertPipelineResultMetadata(t, testCase.runID, metadata)
+
+			metadataBody, err := os.ReadFile(filepath.Join(runDir, "results", "res_1", "metadata.json"))
+			require.NoError(t, err)
+			assert.NotContains(t, string(metadataBody), server.URL)
+
+			manifest := readDownloadResultsTestJSONL(t, filepath.Join(runDir, "results", "index.jsonl"))
+			require.Len(t, manifest, 2)
+			assert.Equal(t, "res_1", manifest[0]["id"])
+			paths, ok := manifest[0]["paths"].(map[string]any)
+			require.True(t, ok)
+			assert.Equal(t, "results/res_1/archive.tar.gz", paths["archive"])
+			assert.Equal(t, "results/res_1/files/result/metrics.json", paths["metrics"])
+			assert.Equal(t, "results/res_1/files/result/predicted_structure.cif", paths["structure"])
+			assert.Equal(t, "results/res_1/files/result/pae.npz", paths["pae"])
 		})
 	}
 }
@@ -804,6 +841,14 @@ func predictionResponseJSON(id string, status string, workspaceID string, archiv
 		"workspace_id": workspaceID,
 		"started_at":   time.Now().UTC().Format(time.RFC3339),
 		"completed_at": time.Now().UTC().Format(time.RFC3339),
+		"input": map[string]any{
+			"entities": []map[string]any{{
+				"chain_ids": []string{"A"},
+				"type":      "protein",
+				"value":     "ACDE",
+			}},
+			"num_samples": 1,
+		},
 	}
 	if errorCode != "" {
 		payload["error"] = map[string]any{"code": errorCode}
@@ -840,15 +885,14 @@ func pipelineGetResponseJSON(id string, status string, workspaceID string, lates
 func pipelineResultsPageJSON(baseURL string, runID string, resultIDs ...string) map[string]any {
 	data := make([]map[string]any, 0, len(resultIDs))
 	for _, resultID := range resultIDs {
-		data = append(data, map[string]any{
-			"id": resultID,
-			"artifacts": map[string]any{
-				"archive": map[string]any{
-					"url":            fmt.Sprintf("%s/files/%s/%s.tar.gz", baseURL, runID, resultID),
-					"url_expires_at": time.Now().Add(time.Hour).UTC().Format(time.RFC3339),
-				},
+		result := pipelineResultJSON(runID, resultID)
+		result["artifacts"] = map[string]any{
+			"archive": map[string]any{
+				"url":            fmt.Sprintf("%s/files/%s/%s.tar.gz", baseURL, runID, resultID),
+				"url_expires_at": time.Now().Add(time.Hour).UTC().Format(time.RFC3339),
 			},
-		})
+		}
+		data = append(data, result)
 	}
 	var lastID any
 	if len(resultIDs) > 0 {
@@ -862,6 +906,51 @@ func pipelineResultsPageJSON(baseURL string, runID string, resultIDs ...string) 
 	}
 }
 
+func pipelineResultJSON(runID string, resultID string) map[string]any {
+	result := map[string]any{
+		"id":         resultID,
+		"created_at": time.Now().UTC().Format(time.RFC3339),
+		"metrics": map[string]any{
+			"binding_confidence":   0.91,
+			"complex_iplddt":       0.82,
+			"complex_plddt":        0.83,
+			"helix_fraction":       0.10,
+			"iptm":                 0.84,
+			"loop_fraction":        0.20,
+			"min_interaction_pae":  3.40,
+			"optimization_score":   0.85,
+			"ptm":                  0.86,
+			"sheet_fraction":       0.30,
+			"structure_confidence": 0.87,
+		},
+		"warnings": []map[string]any{{
+			"code":    "low_confidence",
+			"message": "check manually",
+		}},
+	}
+	switch {
+	case strings.HasPrefix(runID, "sm_scr_"):
+		result["external_id"] = "mol-" + resultID
+		result["smiles"] = "Cc1ccc(C(=O)NC)cc1"
+	case strings.HasPrefix(runID, "sm_des_"):
+		result["smiles"] = "N#Cc1ccccc1"
+	case strings.HasPrefix(runID, "prot_scr_"):
+		result["external_id"] = "protein-" + resultID
+		result["entities"] = []map[string]any{{
+			"chain_ids": []string{"A"},
+			"type":      "protein",
+			"value":     "ACDE",
+		}}
+	case strings.HasPrefix(runID, "prot_des_"):
+		result["entities"] = []map[string]any{{
+			"chain_ids": []string{"A"},
+			"type":      "protein",
+			"value":     "WXYZ",
+		}}
+	}
+	return result
+}
+
 func emptyPipelinePageJSON() map[string]any {
 	return map[string]any{
 		"data":     []any{},
@@ -869,6 +958,60 @@ func emptyPipelinePageJSON() map[string]any {
 		"last_id":  nil,
 		"has_more": false,
 	}
+}
+
+func assertPipelineResultMetadata(t *testing.T, runID string, metadata map[string]any) {
+	t.Helper()
+
+	_, hasMetrics := metadata["metrics"].(map[string]any)
+	assert.True(t, hasMetrics)
+	_, hasWarnings := metadata["warnings"].([]any)
+	assert.True(t, hasWarnings)
+
+	switch {
+	case strings.HasPrefix(runID, "sm_scr_"):
+		assert.Equal(t, "mol-res_1", metadata["external_id"])
+		assert.Equal(t, "Cc1ccc(C(=O)NC)cc1", metadata["smiles"])
+	case strings.HasPrefix(runID, "sm_des_"):
+		assert.Equal(t, "N#Cc1ccccc1", metadata["smiles"])
+	case strings.HasPrefix(runID, "prot_scr_"):
+		assert.Equal(t, "protein-res_1", metadata["external_id"])
+		entities, ok := metadata["entities"].([]any)
+		require.True(t, ok)
+		require.NotEmpty(t, entities)
+	case strings.HasPrefix(runID, "prot_des_"):
+		entities, ok := metadata["entities"].([]any)
+		require.True(t, ok)
+		require.NotEmpty(t, entities)
+	}
+}
+
+func readDownloadResultsTestJSON(t *testing.T, path string) map[string]any {
+	t.Helper()
+
+	body, err := os.ReadFile(path)
+	require.NoError(t, err)
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal(body, &payload))
+	return payload
+}
+
+func readDownloadResultsTestJSONL(t *testing.T, path string) []map[string]any {
+	t.Helper()
+
+	body, err := os.ReadFile(path)
+	require.NoError(t, err)
+	lines := strings.Split(strings.TrimSpace(string(body)), "\n")
+	results := make([]map[string]any, 0, len(lines))
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		var payload map[string]any
+		require.NoError(t, json.Unmarshal([]byte(line), &payload))
+		results = append(results, payload)
+	}
+	return results
 }
 
 func makeTarGzArchive(t *testing.T, files map[string]string) []byte {
