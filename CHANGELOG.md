@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2 (2026-04-23)
+
+Full Changelog: [v0.7.1...v0.7.2](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.7.1...v0.7.2)
+
 ## 0.7.1 (2026-04-22)
 
 Full Changelog: [v0.7.0...v0.7.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.7.0...v0.7.1)
