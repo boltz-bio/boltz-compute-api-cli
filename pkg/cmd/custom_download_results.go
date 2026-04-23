@@ -18,6 +18,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -31,6 +32,9 @@ import (
 const (
 	downloadResultsDefaultRootDir     = "boltz-experiments"
 	downloadResultsMetadataFileName   = ".boltz-run.json"
+	downloadResultsRunFileName        = "run.json"
+	downloadResultsResultMetadataName = "metadata.json"
+	downloadResultsResultIndexName    = "index.jsonl"
 	downloadResultsSchemaVersion      = 1
 	downloadResultsPageLimit          = 20
 	downloadResultsSummaryIntervalSec = 30 * time.Second
@@ -199,6 +203,7 @@ type downloadPredictionRunInfo struct {
 	CompletedAt *string
 	ErrorCode   *string
 	ArchiveURL  *string
+	Run         map[string]any
 }
 
 type downloadPipelineRunInfo struct {
@@ -209,11 +214,13 @@ type downloadPipelineRunInfo struct {
 	StoppedAt      *string
 	LatestResultID *string
 	ErrorCode      *string
+	Run            map[string]any
 }
 
 type downloadPipelineResultInfo struct {
 	ID         string
 	ArchiveURL string
+	Metadata   map[string]any
 }
 
 type downloadPipelinePage struct {
@@ -237,12 +244,14 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 			}
 			return newDownloadPipelineRunInfo(
 				string(response.Status),
+				response.ID,
 				response.WorkspaceID,
 				response.StartedAt,
 				response.CompletedAt,
 				response.StoppedAt,
 				response.Progress.LatestResultID,
 				response.Error.Code,
+				response.RawJSON(),
 			), nil
 		},
 		listResults: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
@@ -254,7 +263,7 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 				return downloadPipelinePage{}, err
 			}
 			return normalizePipelinePage(response, func(result boltzcompute.ProteinDesignListResultsResponse) downloadPipelineResultInfo {
-				return downloadPipelineResultInfo{ID: result.ID, ArchiveURL: result.Artifacts.Archive.URL}
+				return newDownloadPipelineResultInfo(result.ID, result.Artifacts.Archive.URL, result.RawJSON())
 			}), nil
 		},
 	},
@@ -268,12 +277,14 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 			}
 			return newDownloadPipelineRunInfo(
 				string(response.Status),
+				response.ID,
 				response.WorkspaceID,
 				response.StartedAt,
 				response.CompletedAt,
 				response.StoppedAt,
 				response.Progress.LatestResultID,
 				response.Error.Code,
+				response.RawJSON(),
 			), nil
 		},
 		listResults: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
@@ -285,7 +296,7 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 				return downloadPipelinePage{}, err
 			}
 			return normalizePipelinePage(response, func(result boltzcompute.ProteinLibraryScreenListResultsResponse) downloadPipelineResultInfo {
-				return downloadPipelineResultInfo{ID: result.ID, ArchiveURL: result.Artifacts.Archive.URL}
+				return newDownloadPipelineResultInfo(result.ID, result.Artifacts.Archive.URL, result.RawJSON())
 			}), nil
 		},
 	},
@@ -299,12 +310,14 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 			}
 			return newDownloadPipelineRunInfo(
 				string(response.Status),
+				response.ID,
 				response.WorkspaceID,
 				response.StartedAt,
 				response.CompletedAt,
 				response.StoppedAt,
 				response.Progress.LatestResultID,
 				response.Error.Code,
+				response.RawJSON(),
 			), nil
 		},
 		listResults: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
@@ -316,7 +329,7 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 				return downloadPipelinePage{}, err
 			}
 			return normalizePipelinePage(response, func(result boltzcompute.SmallMoleculeDesignListResultsResponse) downloadPipelineResultInfo {
-				return downloadPipelineResultInfo{ID: result.ID, ArchiveURL: result.Artifacts.Archive.URL}
+				return newDownloadPipelineResultInfo(result.ID, result.Artifacts.Archive.URL, result.RawJSON())
 			}), nil
 		},
 	},
@@ -330,12 +343,14 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 			}
 			return newDownloadPipelineRunInfo(
 				string(response.Status),
+				response.ID,
 				response.WorkspaceID,
 				response.StartedAt,
 				response.CompletedAt,
 				response.StoppedAt,
 				response.Progress.LatestResultID,
 				response.Error.Code,
+				response.RawJSON(),
 			), nil
 		},
 		listResults: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
@@ -347,7 +362,7 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 				return downloadPipelinePage{}, err
 			}
 			return normalizePipelinePage(response, func(result boltzcompute.SmallMoleculeLibraryScreenListResultsResponse) downloadPipelineResultInfo {
-				return downloadPipelineResultInfo{ID: result.ID, ArchiveURL: result.Artifacts.Archive.URL}
+				return newDownloadPipelineResultInfo(result.ID, result.Artifacts.Archive.URL, result.RawJSON())
 			}), nil
 		},
 	},
@@ -860,6 +875,13 @@ func saveDownloadMetadata(runDir string, metadata downloadRunMetadata) error {
 	return os.Rename(tmpPath, path)
 }
 
+func saveDownloadRunMetadata(runDir string, run map[string]any) error {
+	if len(run) == 0 {
+		return nil
+	}
+	return writeDownloadJSONFile(filepath.Join(runDir, downloadResultsRunFileName), run)
+}
+
 func downloadMetadataPath(runDir string) string {
 	return filepath.Join(runDir, downloadResultsMetadataFileName)
 }
@@ -905,6 +927,9 @@ func (e *downloadResultsEngine) waitForPrediction(ctx context.Context, runDir st
 		previousStatus := derefString(metadata.Remote.Status)
 		updateRunMetadata(metadata, response.Status, response.WorkspaceID, response.StartedAt, response.CompletedAt, nil, nil, response.ErrorCode)
 		if err := saveDownloadMetadata(runDir, *metadata); err != nil {
+			return err
+		}
+		if err := saveDownloadRunMetadata(runDir, response.Run); err != nil {
 			return err
 		}
 		if response.Status != previousStatus {
@@ -966,6 +991,9 @@ func (e *downloadResultsEngine) waitForPipeline(ctx context.Context, runDir stri
 		previousStatus := derefString(metadata.Remote.Status)
 		updateRunMetadata(metadata, response.Status, response.WorkspaceID, response.StartedAt, response.CompletedAt, response.StoppedAt, response.LatestResultID, response.ErrorCode)
 		if err := saveDownloadMetadata(runDir, *metadata); err != nil {
+			return err
+		}
+		if err := saveDownloadRunMetadata(runDir, response.Run); err != nil {
 			return err
 		}
 		if response.Status != previousStatus {
@@ -1076,14 +1104,21 @@ func (e *downloadResultsEngine) drainPendingPipelinePage(ctx context.Context, ru
 			return fmt.Errorf("Unable to resume result page; result %s is no longer present", resultID)
 		}
 
-		archivePath, extractedDir, err := materializationPaths(filepath.Join(runDir, "results", result.ID), result.ArchiveURL)
+		resultDir := filepath.Join(runDir, "results", result.ID)
+		archivePath, extractedDir, err := materializationPaths(resultDir, result.ArchiveURL)
 		if err != nil {
+			return err
+		}
+		if err := savePipelineResultMetadata(resultDir, result); err != nil {
 			return err
 		}
 		if !isDownloadMaterialized(archivePath, extractedDir) {
 			if err := e.materializeArchive(ctx, runDir, metadata, result.ArchiveURL, archivePath, extractedDir, map[string]any{"result_id": result.ID}); err != nil {
 				return err
 			}
+		}
+		if err := rebuildPipelineResultManifest(runDir); err != nil {
+			return err
 		}
 
 		metadata.Pending.ResultIDs = metadata.Pending.ResultIDs[1:]
@@ -1364,6 +1399,226 @@ func isDownloadMaterialized(archivePath string, extractedDir string) bool {
 	return err == nil && info.IsDir()
 }
 
+func newDownloadPipelineResultInfo(id string, archiveURL string, rawJSON string) downloadPipelineResultInfo {
+	return downloadPipelineResultInfo{
+		ID:         id,
+		ArchiveURL: archiveURL,
+		Metadata:   sanitizedDownloadJSONMap(rawJSON, id, "artifacts"),
+	}
+}
+
+func savePipelineResultMetadata(resultDir string, result downloadPipelineResultInfo) error {
+	metadata := cloneDownloadJSONMap(result.Metadata)
+	if result.ID != "" {
+		if _, ok := metadata["id"]; !ok {
+			metadata["id"] = result.ID
+		}
+	}
+	return writeDownloadJSONFile(filepath.Join(resultDir, downloadResultsResultMetadataName), metadata)
+}
+
+func rebuildPipelineResultManifest(runDir string) error {
+	resultsDir := filepath.Join(runDir, "results")
+	entries, err := os.ReadDir(resultsDir)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	manifest := make([]map[string]any, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		resultDir := filepath.Join(resultsDir, entry.Name())
+		metadataPath := filepath.Join(resultDir, downloadResultsResultMetadataName)
+		metadata, err := readDownloadJSONFile(metadataPath)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if _, ok := metadata["id"]; !ok {
+			metadata["id"] = entry.Name()
+		}
+		paths := pipelineResultLocalPaths(runDir, resultDir)
+		if len(paths) > 0 {
+			metadata["paths"] = paths
+		}
+		manifest = append(manifest, metadata)
+	}
+
+	sort.SliceStable(manifest, func(i, j int) bool {
+		return fmt.Sprint(manifest[i]["id"]) < fmt.Sprint(manifest[j]["id"])
+	})
+
+	return writeDownloadJSONLFile(filepath.Join(resultsDir, downloadResultsResultIndexName), manifest)
+}
+
+func pipelineResultLocalPaths(runDir string, resultDir string) map[string]string {
+	paths := map[string]string{}
+	if archivePath := findPipelineResultArchive(resultDir); archivePath != "" {
+		paths["archive"] = relativeDownloadPath(runDir, archivePath)
+	}
+	extractedDir := filepath.Join(resultDir, "files")
+	if info, err := os.Stat(extractedDir); err == nil && info.IsDir() {
+		paths["files"] = relativeDownloadPath(runDir, extractedDir)
+		if metricsPath := findExtractedResultFile(extractedDir, []string{"result/metrics.json", "metrics.json"}, func(path string) bool {
+			return filepath.Base(path) == "metrics.json"
+		}); metricsPath != "" {
+			paths["metrics"] = relativeDownloadPath(runDir, metricsPath)
+		}
+		if structurePath := findExtractedResultFile(extractedDir, []string{"result/predicted_structure.cif", "predicted_structure.cif"}, isStructureArtifactPath); structurePath != "" {
+			paths["structure"] = relativeDownloadPath(runDir, structurePath)
+		}
+		if paePath := findExtractedResultFile(extractedDir, []string{"result/pae.npz", "pae.npz"}, func(path string) bool {
+			return filepath.Base(path) == "pae.npz"
+		}); paePath != "" {
+			paths["pae"] = relativeDownloadPath(runDir, paePath)
+		}
+	}
+	return paths
+}
+
+func findPipelineResultArchive(resultDir string) string {
+	for _, suffix := range downloadResultsSupportedArchiveTypes {
+		candidate := filepath.Join(resultDir, "archive"+suffix)
+		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+			return candidate
+		}
+	}
+	return ""
+}
+
+func findExtractedResultFile(root string, preferred []string, matches func(string) bool) string {
+	for _, name := range preferred {
+		candidate := filepath.Join(root, filepath.FromSlash(name))
+		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+			return candidate
+		}
+	}
+
+	var found string
+	_ = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil || entry.IsDir() || found != "" {
+			return nil
+		}
+		if matches(path) {
+			found = path
+		}
+		return nil
+	})
+	return found
+}
+
+func isStructureArtifactPath(path string) bool {
+	name := strings.ToLower(filepath.Base(path))
+	return name == "predicted_structure.cif" || strings.HasSuffix(name, ".cif") || strings.HasSuffix(name, ".pdb")
+}
+
+func relativeDownloadPath(root string, target string) string {
+	rel, err := filepath.Rel(root, target)
+	if err != nil {
+		return filepath.ToSlash(target)
+	}
+	return filepath.ToSlash(rel)
+}
+
+func sanitizedDownloadJSONMap(rawJSON string, fallbackID string, omitTopLevelKeys ...string) map[string]any {
+	var payload map[string]any
+	if strings.TrimSpace(rawJSON) != "" {
+		if err := json.Unmarshal([]byte(rawJSON), &payload); err != nil {
+			payload = nil
+		}
+	}
+	if payload == nil {
+		payload = map[string]any{}
+	}
+	for _, key := range omitTopLevelKeys {
+		delete(payload, key)
+	}
+	scrubPresignedURLFields(payload)
+	if fallbackID != "" {
+		if _, ok := payload["id"]; !ok {
+			payload["id"] = fallbackID
+		}
+	}
+	return payload
+}
+
+func scrubPresignedURLFields(value any) {
+	switch typed := value.(type) {
+	case map[string]any:
+		delete(typed, "url")
+		delete(typed, "url_expires_at")
+		for _, child := range typed {
+			scrubPresignedURLFields(child)
+		}
+	case []any:
+		for _, child := range typed {
+			scrubPresignedURLFields(child)
+		}
+	}
+}
+
+func cloneDownloadJSONMap(value map[string]any) map[string]any {
+	cloned := make(map[string]any, len(value))
+	for key, child := range value {
+		cloned[key] = child
+	}
+	return cloned
+}
+
+func readDownloadJSONFile(path string) (map[string]any, error) {
+	body, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(body, &payload); err != nil {
+		return nil, err
+	}
+	if payload == nil {
+		payload = map[string]any{}
+	}
+	return payload, nil
+}
+
+func writeDownloadJSONFile(path string, value any) error {
+	payload, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		return err
+	}
+	payload = append(payload, '\n')
+	return writeDownloadFileAtomically(path, payload)
+}
+
+func writeDownloadJSONLFile(path string, values []map[string]any) error {
+	var builder strings.Builder
+	encoder := json.NewEncoder(&builder)
+	encoder.SetEscapeHTML(false)
+	for _, value := range values {
+		if err := encoder.Encode(value); err != nil {
+			return err
+		}
+	}
+	return writeDownloadFileAtomically(path, []byte(builder.String()))
+}
+
+func writeDownloadFileAtomically(path string, payload []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	tmpPath := path + ".tmp"
+	if err := os.WriteFile(tmpPath, payload, 0o644); err != nil {
+		return err
+	}
+	return os.Rename(tmpPath, path)
+}
+
 func updateRunMetadata(metadata *downloadRunMetadata, status string, workspaceID *string, startedAt *string, completedAt *string, stoppedAt *string, latestResultID *string, errorCode *string) {
 	if workspaceID != nil {
 		metadata.Remote.WorkspaceID = cloneString(workspaceID)
@@ -1489,6 +1744,7 @@ func (e *downloadResultsEngine) getPrediction(ctx context.Context, runID string,
 		CompletedAt: normalizedTimePointer(response.CompletedAt),
 		ErrorCode:   normalizedStringPointer(response.Error.Code),
 		ArchiveURL:  normalizedStringPointer(response.Output.Archive.URL),
+		Run:         sanitizedDownloadJSONMap(response.RawJSON(), response.ID),
 	}, nil
 }
 
@@ -1508,7 +1764,7 @@ func (e *downloadResultsEngine) listPipelineResults(ctx context.Context, runType
 	return adapter.listResults(ctx, e.client, runID, workspaceID, afterID)
 }
 
-func newDownloadPipelineRunInfo(status string, workspaceID string, startedAt time.Time, completedAt time.Time, stoppedAt time.Time, latestResultID string, errorCode string) downloadPipelineRunInfo {
+func newDownloadPipelineRunInfo(status string, runID string, workspaceID string, startedAt time.Time, completedAt time.Time, stoppedAt time.Time, latestResultID string, errorCode string, rawJSON string) downloadPipelineRunInfo {
 	return downloadPipelineRunInfo{
 		Status:         status,
 		WorkspaceID:    normalizedStringPointer(workspaceID),
@@ -1517,6 +1773,7 @@ func newDownloadPipelineRunInfo(status string, workspaceID string, startedAt tim
 		StoppedAt:      normalizedTimePointer(stoppedAt),
 		LatestResultID: normalizedStringPointer(latestResultID),
 		ErrorCode:      normalizedStringPointer(errorCode),
+		Run:            sanitizedDownloadJSONMap(rawJSON, runID),
 	}
 }
 
