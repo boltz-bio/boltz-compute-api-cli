@@ -184,13 +184,15 @@ Refresh tokens are stored in the OS keychain when available, with a fallback to:
 
 `download-results` creates or resumes a local run directory under `boltz-experiments/` and checkpoints progress in `.boltz-run.json`.
 
+Structure prediction run IDs now use the `sab_pred` prefix. Historical `pred_` IDs are still supported.
+
 Examples:
 
 ```sh
-boltz-api download-results --id pred_123 --name example-run
+boltz-api download-results --id sab_pred_123 --name example-run
 boltz-api download-results --name example-run
 boltz-api download-results --id prot_des_123 --name batch-run
-boltz-api download-results --id pred_123 --name human-run --progress-format text --verbose
+boltz-api download-results --id sab_pred_123 --name human-run --progress-format text --verbose
 ```
 
 Use `download-status` to read the local checkpoint without making API calls:

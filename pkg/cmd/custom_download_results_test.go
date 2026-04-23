@@ -106,6 +106,21 @@ func TestDownloadResultsMetadataRoundTripPreservesExtraFields(t *testing.T) {
 	assert.Contains(t, string(body), `"unexpected": true`)
 }
 
+func TestInferDownloadRunTypeSupportsStructurePredictionPrefixes(t *testing.T) {
+	testCases := []string{
+		"sab_pred_123",
+		"pred_123",
+	}
+
+	for _, runID := range testCases {
+		t.Run(runID, func(t *testing.T) {
+			runType, err := inferDownloadRunType(runID)
+			require.NoError(t, err)
+			assert.Equal(t, downloadRunTypePrediction, runType)
+		})
+	}
+}
+
 func TestPredictionDownloadResultsDefaultProgressJSONL(t *testing.T) {
 	setDownloadResultsTestEnv(t)
 	cwd := t.TempDir()
@@ -189,6 +204,50 @@ func TestPredictionDownloadResultsUsesExistingDirectoryWithoutMetadata(t *testin
 	assert.EqualValues(t, 1, archiveRequests.Load())
 	assert.FileExists(t, filepath.Join(runDir, "notes.txt"))
 	assert.FileExists(t, downloadMetadataPath(runDir))
+	assert.FileExists(t, filepath.Join(runDir, "outputs", "archive.tar.gz"))
+	assert.FileExists(t, filepath.Join(runDir, "outputs", "files", "nested", "output.txt"))
+}
+
+func TestPredictionDownloadResultsSupportsSabPredPrefix(t *testing.T) {
+	setDownloadResultsTestEnv(t)
+	cwd := t.TempDir()
+	t.Chdir(cwd)
+
+	const runID = "sab_pred_123"
+
+	archiveBytes := makeTarGzArchive(t, map[string]string{"nested/output.txt": "done"})
+	var archiveRequests atomic.Int32
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/compute/v1/predictions/structure-and-binding/" + runID:
+			writeJSON(t, w, predictionResponseJSON(runID, "succeeded", "ws_123", server.URL+"/files/prediction.tar.gz", ""))
+		case "/files/prediction.tar.gz":
+			archiveRequests.Add(1)
+			assert.Empty(t, r.Header.Get("Authorization"))
+			assert.Empty(t, r.Header.Get("x-api-key"))
+			_, _ = w.Write(archiveBytes)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	stdout, stderr, err := runDownloadResultsCLI(
+		t,
+		"--base-url", server.URL,
+		"--api-key", "test-key",
+		"download-results",
+		"--id", runID,
+		"--name", "prediction-run",
+	)
+	require.NoError(t, err)
+
+	runDir := filepath.Join(cwd, downloadResultsDefaultRootDir, "prediction-run")
+	assert.Equal(t, runDir+"\n", stdout)
+	assert.NotEmpty(t, stderr)
+	assert.EqualValues(t, 1, archiveRequests.Load())
 	assert.FileExists(t, filepath.Join(runDir, "outputs", "archive.tar.gz"))
 	assert.FileExists(t, filepath.Join(runDir, "outputs", "files", "nested", "output.txt"))
 }

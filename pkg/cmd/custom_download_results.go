@@ -43,6 +43,8 @@ var (
 		prefix  string
 		runType downloadRunType
 	}{
+		// Structure predictions now use the sab_pred prefix; keep pred_ as a legacy alias.
+		{prefix: "sab_pred_", runType: downloadRunTypePrediction},
 		{prefix: "pred_", runType: downloadRunTypePrediction},
 		{prefix: "prot_des_", runType: downloadRunTypeProteinDesign},
 		{prefix: "prot_scr_", runType: downloadRunTypeProteinLibraryScreen},
