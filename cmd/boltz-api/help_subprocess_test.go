@@ -72,6 +72,216 @@ func TestStructuredIncludeObjectFlagSubprocess(t *testing.T) {
 	require.Equal(t, "SEQ", entity["value"])
 }
 
+func TestMergedInputFlagSubprocess(t *testing.T) {
+	binary := buildCLIBinary(t)
+	env := authProcessEnv(t)
+
+	testCases := []struct {
+		name       string
+		command    []string
+		inputBody  map[string]any
+		assertBody func(*testing.T, map[string]any)
+	}{
+		{
+			name:    "small-molecule-design-estimate-cost",
+			command: []string{"small-molecule:design", "estimate-cost"},
+			inputBody: map[string]any{
+				"num_molecules":    10,
+				"target":           map[string]any{"marker": "from-input"},
+				"chemical_space":   "enamine_real",
+				"molecule_filters": map[string]any{"boltz_smarts_catalog_filter_level": "recommended"},
+				"workspace_id":     "workspace-from-input",
+				"idempotency_key":  "idempotency-from-input",
+			},
+			assertBody: func(t *testing.T, body map[string]any) {
+				require.Equal(t, float64(10), body["num_molecules"])
+				require.Equal(t, "enamine_real", body["chemical_space"])
+				filters, ok := body["molecule_filters"].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t, "recommended", filters["boltz_smarts_catalog_filter_level"])
+			},
+		},
+		{
+			name:    "small-molecule-design-start",
+			command: []string{"small-molecule:design", "start"},
+			inputBody: map[string]any{
+				"num_molecules":    10,
+				"target":           map[string]any{"marker": "from-input"},
+				"chemical_space":   "enamine_real",
+				"molecule_filters": map[string]any{"boltz_smarts_catalog_filter_level": "recommended"},
+				"workspace_id":     "workspace-from-input",
+				"idempotency_key":  "idempotency-from-input",
+			},
+			assertBody: func(t *testing.T, body map[string]any) {
+				require.Equal(t, float64(10), body["num_molecules"])
+				require.Equal(t, "enamine_real", body["chemical_space"])
+				filters, ok := body["molecule_filters"].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t, "recommended", filters["boltz_smarts_catalog_filter_level"])
+			},
+		},
+		{
+			name:    "small-molecule-library-screen-estimate-cost",
+			command: []string{"small-molecule:library-screen", "estimate-cost"},
+			inputBody: map[string]any{
+				"molecules":        []map[string]any{{"smiles": "CCO", "id": "mol-1"}},
+				"target":           map[string]any{"marker": "from-input"},
+				"molecule_filters": map[string]any{"boltz_smarts_catalog_filter_level": "recommended"},
+				"workspace_id":     "workspace-from-input",
+				"idempotency_key":  "idempotency-from-input",
+			},
+			assertBody: func(t *testing.T, body map[string]any) {
+				molecules, ok := body["molecules"].([]any)
+				require.True(t, ok)
+				require.Len(t, molecules, 1)
+				molecule, ok := molecules[0].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t, "mol-1", molecule["id"])
+			},
+		},
+		{
+			name:    "small-molecule-library-screen-start",
+			command: []string{"small-molecule:library-screen", "start"},
+			inputBody: map[string]any{
+				"molecules":        []map[string]any{{"smiles": "CCO", "id": "mol-1"}},
+				"target":           map[string]any{"marker": "from-input"},
+				"molecule_filters": map[string]any{"boltz_smarts_catalog_filter_level": "recommended"},
+				"workspace_id":     "workspace-from-input",
+				"idempotency_key":  "idempotency-from-input",
+			},
+			assertBody: func(t *testing.T, body map[string]any) {
+				molecules, ok := body["molecules"].([]any)
+				require.True(t, ok)
+				require.Len(t, molecules, 1)
+				molecule, ok := molecules[0].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t, "mol-1", molecule["id"])
+			},
+		},
+		{
+			name:    "protein-design-estimate-cost",
+			command: []string{"protein:design", "estimate-cost"},
+			inputBody: map[string]any{
+				"binder_specification": map[string]any{"modality": "peptide"},
+				"num_proteins":         10,
+				"target":               map[string]any{"marker": "from-input"},
+				"workspace_id":         "workspace-from-input",
+				"idempotency_key":      "idempotency-from-input",
+			},
+			assertBody: func(t *testing.T, body map[string]any) {
+				require.Equal(t, float64(10), body["num_proteins"])
+				binder, ok := body["binder_specification"].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t, "peptide", binder["modality"])
+			},
+		},
+		{
+			name:    "protein-design-start",
+			command: []string{"protein:design", "start"},
+			inputBody: map[string]any{
+				"binder_specification": map[string]any{"modality": "peptide"},
+				"num_proteins":         10,
+				"target":               map[string]any{"marker": "from-input"},
+				"workspace_id":         "workspace-from-input",
+				"idempotency_key":      "idempotency-from-input",
+			},
+			assertBody: func(t *testing.T, body map[string]any) {
+				require.Equal(t, float64(10), body["num_proteins"])
+				binder, ok := body["binder_specification"].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t, "peptide", binder["modality"])
+			},
+		},
+		{
+			name:    "protein-library-screen-estimate-cost",
+			command: []string{"protein:library-screen", "estimate-cost"},
+			inputBody: map[string]any{
+				"proteins":        []map[string]any{{"id": "prot-1", "entities": []map[string]any{{"type": "protein", "value": "SEQ"}}}},
+				"target":          map[string]any{"marker": "from-input"},
+				"workspace_id":    "workspace-from-input",
+				"idempotency_key": "idempotency-from-input",
+			},
+			assertBody: func(t *testing.T, body map[string]any) {
+				proteins, ok := body["proteins"].([]any)
+				require.True(t, ok)
+				require.Len(t, proteins, 1)
+				protein, ok := proteins[0].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t, "prot-1", protein["id"])
+			},
+		},
+		{
+			name:    "protein-library-screen-start",
+			command: []string{"protein:library-screen", "start"},
+			inputBody: map[string]any{
+				"proteins":        []map[string]any{{"id": "prot-1", "entities": []map[string]any{{"type": "protein", "value": "SEQ"}}}},
+				"target":          map[string]any{"marker": "from-input"},
+				"workspace_id":    "workspace-from-input",
+				"idempotency_key": "idempotency-from-input",
+			},
+			assertBody: func(t *testing.T, body map[string]any) {
+				proteins, ok := body["proteins"].([]any)
+				require.True(t, ok)
+				require.Len(t, proteins, 1)
+				protein, ok := proteins[0].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t, "prot-1", protein["id"])
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			inputPath := filepath.Join(tmpDir, "input.json")
+			targetPath := filepath.Join(tmpDir, "target.json")
+
+			inputBytes, err := json.Marshal(tc.inputBody)
+			require.NoError(t, err)
+			require.NoError(t, os.WriteFile(inputPath, inputBytes, 0644))
+			require.NoError(t, os.WriteFile(targetPath, []byte(`{"marker":"from-flag"}`), 0644))
+
+			var capturedBody []byte
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var readErr error
+				capturedBody, readErr = io.ReadAll(r.Body)
+				require.NoError(t, readErr)
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(`{"ok":true}`))
+			}))
+			defer server.Close()
+
+			args := []string{
+				"--api-key", "test-key",
+				"--base-url", server.URL,
+				"--format", "raw",
+			}
+			args = append(args, tc.command...)
+			args = append(args,
+				"--input", "@json://"+inputPath,
+				"--target", "@json://"+targetPath,
+				"--workspace-id", "workspace-from-flag",
+				"--idempotency-key", "idempotency-from-flag",
+			)
+
+			result := runCLI(t, binary, env, args...)
+			require.Equal(t, 0, result.ExitCode, result.Stderr)
+
+			var body map[string]any
+			require.NoError(t, json.Unmarshal(capturedBody, &body))
+
+			require.Equal(t, "workspace-from-flag", body["workspace_id"])
+			require.Equal(t, "idempotency-from-flag", body["idempotency_key"])
+
+			target, ok := body["target"].(map[string]any)
+			require.True(t, ok)
+			require.Equal(t, "from-flag", target["marker"])
+
+			tc.assertBody(t, body)
+		})
+	}
+}
+
 func TestNativeIDFlagParsesOnRetrieveCommands(t *testing.T) {
 	binary := buildCLIBinary(t)
 	env := authProcessEnv(t)

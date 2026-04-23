@@ -706,13 +706,6 @@ func ensureDownloadDirectoryReady(runDir string) error {
 		} else if err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
-		entries, err := os.ReadDir(runDir)
-		if err != nil {
-			return err
-		}
-		if len(entries) > 0 {
-			return fmt.Errorf("Run directory already exists without experiments metadata: %s. Choose a different `name`.", runDir)
-		}
 		return nil
 	}
 	if !errors.Is(err, os.ErrNotExist) {

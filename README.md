@@ -260,12 +260,32 @@ followed by a third `/` (for example, `@file:///tmp/file.txt`).
 boltz-api <command> --arg @data://file.txt
 ```
 
-### CLI flags vs piped JSON/YAML
+### Structured input for design and screen commands
 
-Some array-valued request body fields are exposed as repeatable singular flags
-for CLI ergonomics. Repeat the flag to add multiple entries:
+For small-molecule/protein design and library-screen create or estimate
+commands, prefer a single top-level `--input` value. The CLI merges that object
+into the request body, so `idempotency_key` and `workspace_id` can still stay as
+their own top-level flags:
 
 ```bash
+boltz-api small-molecule:library-screen start \
+  --input @json:///tmp/input.json \
+  --idempotency-key req_123 \
+  --workspace-id ws_123
+
+boltz-api protein:design start \
+  --input @json:///tmp/input.json \
+  --idempotency-key req_123
+```
+
+Legacy per-field flags still work and can override fields from `--input` when
+you want to tweak part of a payload:
+
+```bash
+boltz-api small-molecule:library-screen start \
+  --input @json:///tmp/input.json \
+  --target @json:///tmp/target-override.json
+
 boltz-api small-molecule:library-screen start \
   --molecule '{smiles: CCO}' \
   --molecule '{smiles: CCN}' \
@@ -278,7 +298,8 @@ boltz-api protein:library-screen start \
 ```
 
 When piping JSON or YAML on stdin, the CLI merges that data onto the HTTP
-request body, so you must use API body field names, not CLI flag names:
+request body, so you must use API body field names, not singular legacy CLI
+flag names:
 
 ```bash
 boltz-api small-molecule:library-screen start <<'YAML'

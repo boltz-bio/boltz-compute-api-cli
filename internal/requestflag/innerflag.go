@@ -192,6 +192,155 @@ func (f *InnerFlag[T]) IsBoolFlag() bool {
 	return isBool
 }
 
+// DerivedInnerFlag is an inner flag that reuses another flag's parsing and doc metadata.
+// It is useful when one CLI shape needs an alias for an existing top-level body field.
+type DerivedInnerFlag struct {
+	Name        string
+	DefaultText string
+	Usage       string
+	Aliases     []string
+	OuterFlag   cli.Flag
+	InnerField  string
+	DataAliases []string
+
+	ParseValue func(string) (any, error)
+	Type       string
+	MultiValue bool
+	BoolFlag   bool
+}
+
+var _ cli.Flag = (*DerivedInnerFlag)(nil)
+var _ cli.DocGenerationFlag = (*DerivedInnerFlag)(nil)
+var _ cli.DocGenerationMultiValueFlag = (*DerivedInnerFlag)(nil)
+
+func (f *DerivedInnerFlag) SetOuterFlag(flag cli.Flag) {
+	f.OuterFlag = flag
+}
+
+func (f *DerivedInnerFlag) GetOuterFlag() cli.Flag {
+	return f.OuterFlag
+}
+
+func (f *DerivedInnerFlag) GetInnerField() string {
+	return f.InnerField
+}
+
+func (f *DerivedInnerFlag) GetDataAliases() []string {
+	return f.DataAliases
+}
+
+func (f *DerivedInnerFlag) PreParse() error {
+	return nil
+}
+
+func (f *DerivedInnerFlag) PostParse() error {
+	return nil
+}
+
+func (f *DerivedInnerFlag) Set(name string, rawVal string) error {
+	if f.ParseValue == nil {
+		return fmt.Errorf("no parser configured for inner flag %s", f.Name)
+	}
+	parsedValue, err := f.ParseValue(rawVal)
+	if err != nil {
+		return err
+	}
+	settableInnerField, ok := f.OuterFlag.(SettableInnerField)
+	if !ok {
+		return fmt.Errorf("Cannot set inner field on %v", f.OuterFlag)
+	}
+	settableInnerField.SetInnerField(f.InnerField, parsedValue)
+	return nil
+}
+
+func (f *DerivedInnerFlag) Get() any {
+	return nil
+}
+
+func (f *DerivedInnerFlag) String() string {
+	return cli.FlagStringer(f)
+}
+
+func (f *DerivedInnerFlag) IsSet() bool {
+	return false
+}
+
+func (f *DerivedInnerFlag) Names() []string {
+	return cli.FlagNames(f.Name, f.Aliases)
+}
+
+func (f *DerivedInnerFlag) TakesValue() bool {
+	return !f.BoolFlag
+}
+
+func (f *DerivedInnerFlag) GetUsage() string {
+	return f.Usage
+}
+
+func (f *DerivedInnerFlag) GetValue() string {
+	return ""
+}
+
+func (f *DerivedInnerFlag) GetDefaultText() string {
+	return f.DefaultText
+}
+
+func (f *DerivedInnerFlag) GetEnvVars() []string {
+	return nil
+}
+
+func (f *DerivedInnerFlag) IsDefaultVisible() bool {
+	return false
+}
+
+func (f *DerivedInnerFlag) TypeName() string {
+	return f.Type
+}
+
+func (f *DerivedInnerFlag) IsMultiValueFlag() bool {
+	return f.MultiValue
+}
+
+func (f *DerivedInnerFlag) IsBoolFlag() bool {
+	return f.BoolFlag
+}
+
+func NewDerivedInnerFlag(flag cli.Flag, name, innerField string) (*DerivedInnerFlag, bool) {
+	parser, ok := flag.(ValueParser)
+	if !ok {
+		return nil, false
+	}
+
+	var usage, defaultText, typeName string
+	if docFlag, ok := flag.(cli.DocGenerationFlag); ok {
+		usage = docFlag.GetUsage()
+		defaultText = docFlag.GetDefaultText()
+		typeName = docFlag.TypeName()
+	}
+
+	boolFlag := false
+	if boolDocFlag, ok := flag.(interface{ IsBoolFlag() bool }); ok {
+		boolFlag = boolDocFlag.IsBoolFlag()
+	}
+
+	var dataAliases []string
+	if inReq, ok := flag.(InRequest); ok {
+		dataAliases = inReq.GetDataAliases()
+	}
+
+	return &DerivedInnerFlag{
+		Name:        name,
+		DefaultText: defaultText,
+		Usage:       usage,
+		InnerField:  innerField,
+		DataAliases: dataAliases,
+		ParseValue:  parser.ParseValue,
+		Type:        typeName,
+		MultiValue:  false,
+		BoolFlag:    boolFlag,
+	}, true
+}
+
 // WithInnerFlags takes a command and a map of flag names to inner flags,
 // and returns a modified command with the appropriate inner flags set.
 func WithInnerFlags(cmd cli.Command, innerFlagMap map[string][]HasOuterFlag) cli.Command {

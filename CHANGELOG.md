@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.1 (2026-04-22)
+
+Full Changelog: [v0.7.0...v0.7.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.7.0...v0.7.1)
+
+### Bug Fixes
+
+* **download-results:** reuse existing run dirs ([e2b52ff](https://github.com/boltz-bio/boltz-compute-api-cli/commit/e2b52ffe4380a9b184f04f050e598c92c8757d27))
+
+## 0.7.0 (2026-04-22)
+
+Full Changelog: [v0.6.0...v0.7.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.6.0...v0.7.0)
+
+### Features
+
+* **cli:** add download status and jsonl progress ([97fcbf8](https://github.com/boltz-bio/boltz-compute-api-cli/commit/97fcbf8abb9e22bfce1ad3611debb49d1300facd))
+* **cli:** support merged input payloads ([bcc2d31](https://github.com/boltz-bio/boltz-compute-api-cli/commit/bcc2d314ad998e100257920d44860ab300603dcb))
+
 ## 0.6.0 (2026-04-22)
 
 Full Changelog: [v0.5.4...v0.6.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.5.4...v0.6.0)
