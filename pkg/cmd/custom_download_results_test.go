@@ -148,6 +148,47 @@ func TestPredictionDownloadResultsDefaultProgressJSONL(t *testing.T) {
 	assert.FileExists(t, filepath.Join(runDir, "outputs", "files", "nested", "output.txt"))
 }
 
+func TestStructureAndBindingPredictionPrefixDownloadsResults(t *testing.T) {
+	setDownloadResultsTestEnv(t)
+	cwd := t.TempDir()
+	t.Chdir(cwd)
+
+	runID := "sab_pred_123"
+	archiveBytes := makeTarGzArchive(t, map[string]string{"nested/output.txt": "done"})
+	var archiveRequests atomic.Int32
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/compute/v1/predictions/structure-and-binding/" + runID:
+			writeJSON(t, w, predictionResponseJSON(runID, "succeeded", "ws_123", server.URL+"/files/prediction.tar.gz", ""))
+		case "/files/prediction.tar.gz":
+			archiveRequests.Add(1)
+			_, _ = w.Write(archiveBytes)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	stdout, stderr, err := runDownloadResultsCLI(
+		t,
+		"--base-url", server.URL,
+		"--api-key", "test-key",
+		"download-results",
+		"--id", runID,
+		"--name", "sab-prediction-run",
+	)
+	require.NoError(t, err)
+
+	runDir := filepath.Join(cwd, downloadResultsDefaultRootDir, "sab-prediction-run")
+	assert.Equal(t, runDir+"\n", stdout)
+	assert.NotEmpty(t, stderr)
+	assert.EqualValues(t, 1, archiveRequests.Load())
+	assert.FileExists(t, filepath.Join(runDir, "outputs", "archive.tar.gz"))
+	assert.FileExists(t, filepath.Join(runDir, "outputs", "files", "nested", "output.txt"))
+}
+
 func TestPredictionDownloadResultsUsesExistingDirectoryWithoutMetadata(t *testing.T) {
 	setDownloadResultsTestEnv(t)
 	cwd := t.TempDir()

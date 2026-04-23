@@ -187,8 +187,9 @@ Refresh tokens are stored in the OS keychain when available, with a fallback to:
 Examples:
 
 ```sh
-boltz-api download-results --id pred_123 --name example-run
+boltz-api download-results --id sab_pred_123 --name example-run
 boltz-api download-results --name example-run
+boltz-api download-results --id pred_123 --name legacy-run
 boltz-api download-results --id prot_des_123 --name batch-run
 boltz-api download-results --id pred_123 --name human-run --progress-format text --verbose
 ```

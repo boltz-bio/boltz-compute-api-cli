@@ -43,6 +43,7 @@ var (
 		prefix  string
 		runType downloadRunType
 	}{
+		{prefix: "sab_pred_", runType: downloadRunTypePrediction},
 		{prefix: "pred_", runType: downloadRunTypePrediction},
 		{prefix: "prot_des_", runType: downloadRunTypeProteinDesign},
 		{prefix: "prot_scr_", runType: downloadRunTypeProteinLibraryScreen},
