@@ -18,12 +18,17 @@ import (
 )
 
 func TestRequestOptionsKeepAPIKeyMode(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{SelectedOrg: "org-config"}))
+
 	var gotAPIKey string
 	var gotAuthorization string
+	var gotOrganization string
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotAPIKey = r.Header.Get("x-api-key")
 		gotAuthorization = r.Header.Get("Authorization")
+		gotOrganization = r.Header.Get("X-Boltz-Organization-Id")
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"ok":true}`))
 	}))
@@ -40,6 +45,7 @@ func TestRequestOptionsKeepAPIKeyMode(t *testing.T) {
 	require.NoError(t, client.Get(context.Background(), "/check", nil, &result))
 	require.Equal(t, "api-key-123", gotAPIKey)
 	require.Empty(t, gotAuthorization)
+	require.Empty(t, gotOrganization)
 }
 
 func TestRequestOptionsInjectBearerTokenAndRemoveInheritedAPIKey(t *testing.T) {
@@ -49,10 +55,11 @@ func TestRequestOptionsInjectBearerTokenAndRemoveInheritedAPIKey(t *testing.T) {
 	t.Setenv("XDG_CACHE_HOME", home)
 
 	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
-		IssuerURL: "https://issuer.example.com",
-		ClientID:  "client-123",
-		Audience:  authconfig.DefaultAudience,
-		Scopes:    []string{"openid", "profile"},
+		IssuerURL:   "https://issuer.example.com",
+		ClientID:    "client-123",
+		Audience:    authconfig.DefaultAudience,
+		Scopes:      []string{"openid", "profile"},
+		SelectedOrg: "org-oauth-selected",
 	}))
 	require.NoError(t, authstore.SaveSession(authstore.Session{
 		IssuerURL:   "https://issuer.example.com",
@@ -66,10 +73,12 @@ func TestRequestOptionsInjectBearerTokenAndRemoveInheritedAPIKey(t *testing.T) {
 
 	var gotAPIKey string
 	var gotAuthorization string
+	var gotOrganization string
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotAPIKey = r.Header.Get("x-api-key")
 		gotAuthorization = r.Header.Get("Authorization")
+		gotOrganization = r.Header.Get("X-Boltz-Organization-Id")
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"ok":true}`))
 	}))
@@ -86,6 +95,7 @@ func TestRequestOptionsInjectBearerTokenAndRemoveInheritedAPIKey(t *testing.T) {
 	require.NoError(t, client.Get(context.Background(), "/check", nil, &result))
 	require.Empty(t, gotAPIKey)
 	require.Equal(t, "Bearer oauth-access", gotAuthorization)
+	require.Equal(t, "org-oauth-selected", gotOrganization)
 }
 
 func parsedTestCommand(t *testing.T, args ...string) *cli.Command {
