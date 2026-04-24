@@ -171,6 +171,7 @@ Available auth commands:
 - `boltz-api auth whoami`
 - `boltz-api auth status`
 - `boltz-api auth validate`
+- `boltz-api auth wait`
 - `boltz-api auth switch-org <org>`
 
 Command roles:
@@ -178,12 +179,21 @@ Command roles:
 - `auth whoami` - concise local identity and current mode
 - `auth status` - stable machine-readable auth diagnostics without refreshing
 - `auth validate` - local auth check that may refresh an expired OAuth access token
+- `auth wait` - wait for usable local auth to appear, returning structured `success` or `waiting` status
 
-`auth status` and `auth validate` return structured output. They exit with code
-`1` when no usable auth mode is available. `auth status` remains read-only;
-`auth validate` may refresh an expired OAuth access token using the stored
-refresh token. In API-key mode, `auth validate` confirms that an API key is
-configured locally; it does not make a server round-trip.
+`auth status`, `auth validate`, and `auth wait` return structured output.
+They exit with code `1` when no usable auth mode is available. `auth status`
+remains read-only; `auth validate` may refresh an expired OAuth access token
+using the stored refresh token; `auth wait` stays read-only and polls local auth
+state until usable auth appears or the timeout expires. In API-key mode,
+`auth validate` confirms that an API key is configured locally; it does not
+make a server round-trip.
+
+For machine callers that need to wait for a browser-based login to finish:
+
+```sh
+boltz-api --format json auth wait --timeout 60s --poll-interval 2s
+```
 
 The CLI stores non-secret auth configuration in:
 

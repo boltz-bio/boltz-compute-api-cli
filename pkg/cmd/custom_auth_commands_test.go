@@ -254,6 +254,53 @@ func TestAuthLoginJSONEventsRequiresDeviceCode(t *testing.T) {
 	require.Contains(t, err.Error(), "--device-code")
 }
 
+func TestAuthWaitSucceedsOnceSessionAppears(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+
+	scopes := append([]string(nil), authconfig.DefaultScopes...)
+	scopes = append(scopes, authconfig.DefaultScope)
+
+	sessionSaved := make(chan error, 1)
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		sessionSaved <- authstore.SaveSession(authstore.Session{
+			IssuerURL:     authconfig.DefaultIssuerURL,
+			ClientID:      authconfig.DefaultClientID,
+			Audience:      authconfig.DefaultAudience,
+			Scopes:        scopes,
+			GrantedScopes: scopes,
+			AccessToken:   "access-token",
+			TokenType:     "Bearer",
+			Expiry:        time.Now().Add(10 * time.Minute),
+		})
+	}()
+
+	output, err := runAuthCommand(t, "--format", "json", "auth", "wait", "--timeout", "500ms", "--poll-interval", "25ms")
+	require.NoError(t, err)
+	require.NoError(t, <-sessionSaved)
+
+	var response map[string]any
+	require.NoError(t, json.Unmarshal([]byte(output), &response))
+	require.Equal(t, "success", response["status"])
+	require.Equal(t, true, response["authenticated"])
+	require.Equal(t, "oauth", response["effective_mode"])
+}
+
+func TestAuthWaitReturnsWaitingStatusOnTimeout(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+
+	output, err := runAuthCommand(t, "--format", "json", "auth", "wait", "--timeout", "75ms", "--poll-interval", "10ms")
+	require.Error(t, err)
+
+	var response map[string]any
+	require.NoError(t, json.Unmarshal([]byte(output), &response))
+	require.Equal(t, "waiting", response["status"])
+	require.Equal(t, true, response["timed_out"])
+	require.Equal(t, false, response["authenticated"])
+}
+
 func runAuthCommand(t *testing.T, args ...string) (string, error) {
 	t.Helper()
 
@@ -274,9 +321,10 @@ func runAuthCommand(t *testing.T, args ...string) (string, error) {
 
 func newAuthTestRoot(writer *os.File) *cli.Command {
 	root := &cli.Command{
-		Name:      "boltz-api",
-		Writer:    writer,
-		ErrWriter: writer,
+		Name:           "boltz-api",
+		Writer:         writer,
+		ErrWriter:      writer,
+		ExitErrHandler: func(context.Context, *cli.Command, error) {},
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "format", Value: "auto"},
 			&cli.BoolFlag{Name: "raw-output"},
