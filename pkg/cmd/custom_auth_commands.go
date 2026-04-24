@@ -22,6 +22,11 @@ import (
 
 const authStatusWarningScopeMismatch = "Granted OAuth scopes do not include the full configured scope set."
 
+const (
+	defaultAuthWaitTimeout      = time.Minute
+	defaultAuthWaitPollInterval = 2 * time.Second
+)
+
 var authNow = time.Now
 
 var authCommand = &cli.Command{
@@ -69,6 +74,24 @@ var authCommand = &cli.Command{
 			Usage:           "Validate local auth state and refresh OAuth sessions when needed",
 			Action:          handleAuthValidate,
 			HideHelpCommand: true,
+		},
+		{
+			Name:            "wait",
+			Usage:           "Wait for usable local auth to become available",
+			Action:          handleAuthWait,
+			HideHelpCommand: true,
+			Flags: []cli.Flag{
+				&cli.DurationFlag{
+					Name:  "timeout",
+					Value: defaultAuthWaitTimeout,
+					Usage: "How long to wait before returning a waiting status",
+				},
+				&cli.DurationFlag{
+					Name:  "poll-interval",
+					Value: defaultAuthWaitPollInterval,
+					Usage: "How often to re-check local auth state while waiting",
+				},
+			},
 		},
 		{
 			Name:            "switch-org",
@@ -163,6 +186,15 @@ type authValidateResponse struct {
 	StoredOAuthSession  *oauthSessionDetails `json:"stored_oauth_session,omitempty"`
 	Warnings            []string             `json:"warnings,omitempty"`
 	Actions             []string             `json:"actions,omitempty"`
+}
+
+type authWaitResponse struct {
+	authStatusResponse
+	Status       string `json:"status"`
+	Message      string `json:"message,omitempty"`
+	TimedOut     bool   `json:"timed_out,omitempty"`
+	Timeout      string `json:"timeout,omitempty"`
+	PollInterval string `json:"poll_interval,omitempty"`
 }
 
 type oauthSessionDetails struct {
@@ -544,6 +576,68 @@ func handleAuthValidate(ctx context.Context, cmd *cli.Command) error {
 	}
 	applyValidateModeNotes(&validate, result.Mode)
 	return showJSONValue(cmd, validate, "auth validate")
+}
+
+func handleAuthWait(ctx context.Context, cmd *cli.Command) error {
+	timeout := cmd.Duration("timeout")
+	pollInterval := cmd.Duration("poll-interval")
+	if timeout < 0 {
+		return autherror.New("invalid_timeout", "Timeout must be zero or greater", "Set `--timeout` to a positive duration like `60s`.")
+	}
+	if pollInterval <= 0 {
+		return autherror.New(
+			"invalid_poll_interval",
+			"Poll interval must be greater than zero",
+			"Set `--poll-interval` to a positive duration like `2s`.",
+		)
+	}
+
+	deadline := authNow().UTC().Add(timeout)
+
+	for {
+		snapshot, err := loadAuthSnapshot(cmd)
+		if err != nil {
+			return err
+		}
+
+		status, authenticated := buildAuthStatusResponse(snapshot)
+		response := authWaitResponse{
+			authStatusResponse: status,
+			Status:             "waiting",
+			Message:            "Usable local authentication is not ready yet.",
+			Timeout:            timeout.String(),
+			PollInterval:       pollInterval.String(),
+		}
+		if authenticated {
+			response.Status = "success"
+			response.Message = "Usable local authentication is available."
+			return showJSONValue(cmd, response, "auth wait")
+		}
+
+		remaining := deadline.Sub(authNow().UTC())
+		if timeout == 0 || remaining <= 0 {
+			response.TimedOut = true
+			response.Message = "Timed out waiting for usable local authentication."
+			if err := showJSONValue(cmd, response, "auth wait"); err != nil {
+				return err
+			}
+			return cli.Exit("", 1)
+		}
+
+		sleepFor := pollInterval
+		if remaining < sleepFor {
+			sleepFor = remaining
+		}
+		timer := time.NewTimer(sleepFor)
+		select {
+		case <-ctx.Done():
+			if !timer.Stop() {
+				<-timer.C
+			}
+			return ctx.Err()
+		case <-timer.C:
+		}
+	}
 }
 
 func handleAuthSwitchOrg(ctx context.Context, cmd *cli.Command) error {
