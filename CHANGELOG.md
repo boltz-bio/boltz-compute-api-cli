@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.8.0 (2026-04-26)
+
+Full Changelog: [v0.7.5...v0.8.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.7.5...v0.8.0)
+
+### Features
+
+* **compute-api:** prefix structure-binding ids with sab_pred ([1c60be9](https://github.com/boltz-bio/boltz-compute-api-cli/commit/1c60be991d4174ecfdc580953c8634c618fd8598))
+
+
+### Chores
+
+* **internal:** codegen related update ([3e7dcc9](https://github.com/boltz-bio/boltz-compute-api-cli/commit/3e7dcc9863323d02fc0df06acb63b07c485ea6cb))
+* **internal:** more robust bootstrap script ([a356ec3](https://github.com/boltz-bio/boltz-compute-api-cli/commit/a356ec3797a695168ffb9e3b174fe8da8efe860f))
+
 ## 0.7.5 (2026-04-24)
 
 Full Changelog: [v0.7.4...v0.7.5](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.7.4...v0.7.5)
