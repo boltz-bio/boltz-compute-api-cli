@@ -13,16 +13,16 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-var authContextMe = cli.Command{
+var authMe = cli.Command{
 	Name:            "me",
 	Usage:           "Returns the organization context available to the current API key or OAuth\nbearer token. OAuth callers can use X-Boltz-Organization-Id to select one of\ntheir organizations.",
 	Suggest:         true,
 	Flags:           []cli.Flag{},
-	Action:          handleAuthContextMe,
+	Action:          handleAuthMe,
 	HideHelpCommand: true,
 }
 
-func handleAuthContextMe(ctx context.Context, cmd *cli.Command) error {
+func handleAuthMe(ctx context.Context, cmd *cli.Command) error {
 	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
@@ -43,7 +43,7 @@ func handleAuthContextMe(ctx context.Context, cmd *cli.Command) error {
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
-	_, err = client.AuthContext.Me(ctx, options...)
+	_, err = client.Auth.Me(ctx, options...)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func handleAuthContextMe(ctx context.Context, cmd *cli.Command) error {
 		ExplicitFormat: explicitFormat,
 		Format:         format,
 		RawOutput:      cmd.Root().Bool("raw-output"),
-		Title:          "auth-context me",
+		Title:          "auth me",
 		Transform:      transform,
 	})
 }

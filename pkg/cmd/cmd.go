@@ -85,11 +85,11 @@ func init() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:     "auth-context",
+				Name:     "auth",
 				Category: "API RESOURCE",
 				Suggest:  true,
 				Commands: []*cli.Command{
-					&authContextMe,
+					&authMe,
 				},
 			},
 			{

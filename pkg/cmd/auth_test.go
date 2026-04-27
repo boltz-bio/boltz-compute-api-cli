@@ -8,13 +8,13 @@ import (
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/mocktest"
 )
 
-func TestAuthContextMe(t *testing.T) {
+func TestAuthMe(t *testing.T) {
 	t.Skip("Mock server tests are disabled")
 	t.Run("regular flags", func(t *testing.T) {
 		mocktest.TestRunMockTestWithFlags(
 			t,
 			"--api-key", "string",
-			"auth-context", "me",
+			"auth", "me",
 		)
 	})
 }
