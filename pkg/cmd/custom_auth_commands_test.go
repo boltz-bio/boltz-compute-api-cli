@@ -156,6 +156,36 @@ func TestAuthStatusSessionMismatchKeepsActiveSourceUnset(t *testing.T) {
 	require.Equal(t, []string{"openid", "profile"}, response.StoredOAuthSession.GrantedScopes)
 }
 
+func TestAuthStatusReportsConfigPathAndPlaceholderWarnings(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+
+	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
+		IssuerURL: "https://issuer.example.com",
+		ClientID:  "client-123",
+		Scopes:    []string{"openid"},
+	}))
+
+	output, err := runAuthCommand(t, "--format", "json", "auth", "status")
+	require.Error(t, err)
+
+	var response map[string]any
+	require.NoError(t, json.Unmarshal([]byte(output), &response))
+	config, ok := response["config"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, true, config["present"])
+	require.Contains(t, config["path"], "config.yaml")
+
+	warnings, ok := response["warnings"].([]any)
+	require.True(t, ok)
+	require.Contains(t, warnings, `OAuth issuer URL looks like a placeholder: "https://issuer.example.com".`)
+	require.Contains(t, warnings, `OAuth client ID looks like a placeholder: "client-123".`)
+
+	actions, ok := response["actions"].([]any)
+	require.True(t, ok)
+	require.Contains(t, actions[0], "Inspect ")
+}
+
 func TestAuthValidateRefreshesExpiredSession(t *testing.T) {
 	setAuthCommandUserDirs(t)
 	useFileOnlyKeyringForAuthCommandTests(t)

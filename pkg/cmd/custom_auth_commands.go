@@ -149,6 +149,7 @@ type authStatusResponse struct {
 	Authenticated        bool                 `json:"authenticated"`
 	EffectiveMode        string               `json:"effective_mode"`
 	ActiveSource         string               `json:"active_source"`
+	Config               authConfigDetails    `json:"config"`
 	APIKeyConfigured     bool                 `json:"api_key_configured"`
 	APIKeyOverridesOAuth bool                 `json:"api_key_overrides_oauth"`
 	IssuerURL            string               `json:"issuer_url,omitempty"`
@@ -177,6 +178,7 @@ type authValidateResponse struct {
 	EffectiveMode       string               `json:"effective_mode"`
 	ActiveSource        string               `json:"active_source"`
 	Refreshed           bool                 `json:"refreshed"`
+	Config              authConfigDetails    `json:"config"`
 	IssuerURL           string               `json:"issuer_url,omitempty"`
 	ClientID            string               `json:"client_id,omitempty"`
 	Audience            string               `json:"audience,omitempty"`
@@ -207,6 +209,11 @@ type authMeResponse struct {
 	ActiveOrganizationID    string                     `json:"active_organization_id,omitempty"`
 	WorkspaceID             *string                    `json:"workspace_id,omitempty"`
 	OrganizationMemberships []authMeOrganizationMember `json:"organization_memberships,omitempty"`
+}
+
+type authConfigDetails struct {
+	Path    string `json:"path,omitempty"`
+	Present bool   `json:"present"`
 }
 
 type authMeOrganizationMember struct {
@@ -563,6 +570,7 @@ func handleAuthValidate(ctx context.Context, cmd *cli.Command) error {
 			Valid:               false,
 			EffectiveMode:       response.EffectiveMode,
 			ActiveSource:        response.ActiveSource,
+			Config:              response.Config,
 			IssuerURL:           response.IssuerURL,
 			ClientID:            response.ClientID,
 			Audience:            response.Audience,
@@ -603,6 +611,7 @@ func handleAuthValidate(ctx context.Context, cmd *cli.Command) error {
 		EffectiveMode:       string(result.Mode),
 		ActiveSource:        response.ActiveSource,
 		Refreshed:           wasSessionRefreshed(snapshotBefore.session, snapshotAfter.session),
+		Config:              response.Config,
 		IssuerURL:           response.IssuerURL,
 		ClientID:            response.ClientID,
 		Audience:            response.Audience,
@@ -763,11 +772,16 @@ type authSnapshot struct {
 	refreshBackend string
 	mode           authmode.Mode
 	sessionMatch   bool
+	config         authConfigDetails
 	sources        whoAmISources
 }
 
 func loadAuthSnapshot(cmd *cli.Command) (authSnapshot, error) {
 	resolved, err := authconfig.Resolve(cmd)
+	if err != nil {
+		return authSnapshot{}, authmode.WrapConfigError(err)
+	}
+	configDetails, err := loadAuthConfigDetails()
 	if err != nil {
 		return authSnapshot{}, authmode.WrapConfigError(err)
 	}
@@ -792,6 +806,7 @@ func loadAuthSnapshot(cmd *cli.Command) (authSnapshot, error) {
 		refreshBackend: backend,
 		mode:           authmode.DescribeMode(resolved, session),
 		sessionMatch:   sessionMatch,
+		config:         configDetails,
 		sources: whoAmISources{
 			APIKey:       resolved.Sources.APIKey,
 			IssuerURL:    resolved.Sources.IssuerURL,
@@ -809,6 +824,20 @@ func loadAuthSnapshot(cmd *cli.Command) (authSnapshot, error) {
 	return snapshot, nil
 }
 
+func loadAuthConfigDetails() (authConfigDetails, error) {
+	path, err := authstore.ConfigFilePath()
+	if err != nil {
+		return authConfigDetails{}, err
+	}
+	details := authConfigDetails{Path: path}
+	if _, statErr := os.Stat(path); statErr == nil {
+		details.Present = true
+	} else if !os.IsNotExist(statErr) {
+		return authConfigDetails{}, statErr
+	}
+	return details, nil
+}
+
 func buildAuthStatusResponse(snapshot authSnapshot) (authStatusResponse, bool) {
 	requestedScopes := append([]string(nil), snapshot.resolved.Scopes...)
 	grantedScopes := append([]string(nil), snapshot.sessionGrantedScopes()...)
@@ -820,6 +849,7 @@ func buildAuthStatusResponse(snapshot authSnapshot) (authStatusResponse, bool) {
 		Authenticated:        false,
 		EffectiveMode:        string(snapshot.mode),
 		ActiveSource:         "none",
+		Config:               snapshot.config,
 		APIKeyConfigured:     strings.TrimSpace(snapshot.resolved.APIKey) != "",
 		APIKeyOverridesOAuth: strings.TrimSpace(snapshot.resolved.APIKey) != "" && snapshot.session != nil,
 		IssuerURL:            snapshot.resolved.IssuerURL,
@@ -832,6 +862,7 @@ func buildAuthStatusResponse(snapshot authSnapshot) (authStatusResponse, bool) {
 		RefreshTokenPresent:  refreshTokenPresent,
 		Sources:              snapshot.sources,
 	}
+	applyOAuthConfigWarnings(&response, snapshot)
 
 	switch {
 	case strings.TrimSpace(snapshot.resolved.APIKey) != "":
@@ -879,6 +910,59 @@ func buildAuthStatusResponse(snapshot authSnapshot) (authStatusResponse, bool) {
 	}
 
 	return response, response.Authenticated
+}
+
+func applyOAuthConfigWarnings(response *authStatusResponse, snapshot authSnapshot) {
+	if response == nil {
+		return
+	}
+
+	if looksLikePlaceholderIssuer(snapshot.resolved.IssuerURL) {
+		response.Warnings = mergeStrings(response.Warnings, []string{
+			fmt.Sprintf("OAuth issuer URL looks like a placeholder: %q.", snapshot.resolved.IssuerURL),
+		})
+		response.Actions = mergeStrings(response.Actions, []string{
+			oauthConfigAction(snapshot),
+		})
+	}
+
+	if looksLikePlaceholderClientID(snapshot.resolved.ClientID) {
+		response.Warnings = mergeStrings(response.Warnings, []string{
+			fmt.Sprintf("OAuth client ID looks like a placeholder: %q.", snapshot.resolved.ClientID),
+		})
+		response.Actions = mergeStrings(response.Actions, []string{
+			oauthConfigAction(snapshot),
+		})
+	}
+}
+
+func oauthConfigAction(snapshot authSnapshot) string {
+	if snapshot.config.Path != "" && snapshot.config.Present {
+		return fmt.Sprintf("Inspect %s or override OAuth settings with `--auth-issuer-url` and `--auth-client-id`.", snapshot.config.Path)
+	}
+	return "Override OAuth settings with `--auth-issuer-url` and `--auth-client-id`, or remove stale environment values."
+}
+
+func looksLikePlaceholderIssuer(value string) bool {
+	value = strings.TrimSpace(strings.ToLower(value))
+	if value == "" {
+		return false
+	}
+	return strings.Contains(value, "issuer.example.") ||
+		strings.Contains(value, "example.com") ||
+		strings.Contains(value, "example.org") ||
+		strings.Contains(value, "example.net") ||
+		strings.Contains(value, "placeholder")
+}
+
+func looksLikePlaceholderClientID(value string) bool {
+	value = strings.TrimSpace(strings.ToLower(value))
+	if value == "" {
+		return false
+	}
+	return value == "client-123" ||
+		strings.Contains(value, "example") ||
+		strings.Contains(value, "placeholder")
 }
 
 func buildStoredOAuthSession(snapshot authSnapshot, grantedScopes []string, missing []string, refreshTokenPresent bool) *oauthSessionDetails {

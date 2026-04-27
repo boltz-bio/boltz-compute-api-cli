@@ -5,6 +5,8 @@ set -eu
 repo="${BOLTZ_API_REPO:-boltz-bio/boltz-compute-api-cli}"
 version="${BOLTZ_API_VERSION:-latest}"
 install_dir="${BOLTZ_API_INSTALL_DIR:-}"
+release_retries="${BOLTZ_API_RELEASE_RETRIES:-12}"
+release_retry_delay="${BOLTZ_API_RELEASE_RETRY_DELAY:-10}"
 
 need() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -19,6 +21,20 @@ need grep
 need install
 need sed
 
+case "$release_retries" in
+  '' | *[!0-9]*)
+    echo "BOLTZ_API_RELEASE_RETRIES must be a non-negative integer" >&2
+    exit 1
+    ;;
+esac
+
+case "$release_retry_delay" in
+  '' | *[!0-9]*)
+    echo "BOLTZ_API_RELEASE_RETRY_DELAY must be a non-negative integer" >&2
+    exit 1
+    ;;
+esac
+
 case "$(uname -s)" in
   Darwin) os="macos" ;;
   Linux) os="linux" ;;
@@ -27,6 +43,31 @@ case "$(uname -s)" in
     exit 1
     ;;
 esac
+
+case "$os" in
+  macos) config_file="${HOME}/Library/Application Support/boltz-compute/config.yaml" ;;
+  linux) config_file="${XDG_CONFIG_HOME:-${HOME}/.config}/boltz-compute/config.yaml" ;;
+esac
+
+warn_existing_config() {
+  if [ ! -f "$config_file" ]; then
+    return
+  fi
+
+  config_issuer="$(sed -n 's/^[[:space:]]*issuer_url:[[:space:]]*["'\'']*\([^"'\'']*\)["'\'']*[[:space:]]*$/\1/p' "$config_file" | head -n 1)"
+  config_client="$(sed -n 's/^[[:space:]]*client_id:[[:space:]]*["'\'']*\([^"'\'']*\)["'\'']*[[:space:]]*$/\1/p' "$config_file" | head -n 1)"
+
+  if [ -n "$config_issuer" ] && [ "$config_issuer" != "https://lab.boltz.bio" ]; then
+    echo "Warning: existing boltz-api config at ${config_file} sets auth issuer to ${config_issuer}." >&2
+    echo "Run 'boltz-api config show' to inspect it or 'boltz-api config reset' to remove non-secret local config." >&2
+  fi
+  if [ -n "$config_client" ] && [ "$config_client" != "boltz-cli" ]; then
+    echo "Warning: existing boltz-api config at ${config_file} sets auth client ID to ${config_client}." >&2
+    echo "Run 'boltz-api config show' to inspect it or 'boltz-api config reset' to remove non-secret local config." >&2
+  fi
+}
+
+warn_existing_config
 
 case "$(uname -m)" in
   x86_64 | amd64) arch="amd64" ;;
@@ -40,22 +81,15 @@ case "$(uname -m)" in
 esac
 
 if [ "$version" = "latest" ]; then
-  release_url="https://api.github.com/repos/${repo}/releases/latest"
+  release_url="https://api.github.com/repos/${repo}/releases?per_page=20"
+  allow_release_fallback=1
 else
   case "$version" in
     v*) tag="$version" ;;
     *) tag="v$version" ;;
   esac
   release_url="https://api.github.com/repos/${repo}/releases/tags/${tag}"
-fi
-
-release_json="$(curl -fsSL -H "Accept: application/vnd.github+json" "$release_url")"
-tag="$(printf '%s\n' "$release_json" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
-version_number="$(printf '%s' "$tag" | sed 's/^v//')"
-
-if [ -z "$tag" ]; then
-  echo "Could not determine the boltz-api release tag" >&2
-  exit 1
+  allow_release_fallback=0
 fi
 
 case "$os" in
@@ -63,15 +97,44 @@ case "$os" in
   linux) ext="tar.gz" ;;
 esac
 
-asset_url="$(printf '%s\n' "$release_json" \
-  | sed -n 's/.*"browser_download_url"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
-  | grep "boltz-api_.*_${os}_${arch}.*\\.${ext}$" \
-  | head -n 1)"
+retry=0
+while :; do
+  release_json="$(curl -fsSL -H "Accept: application/vnd.github+json" "$release_url")"
+  tag="$(printf '%s\n' "$release_json" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
+  latest_tag="$tag"
 
-if [ -z "$asset_url" ]; then
-  echo "No boltz-api release asset found for ${os}/${arch} in ${tag}" >&2
-  exit 1
-fi
+  if [ -z "$tag" ]; then
+    echo "Could not determine the boltz-api release tag" >&2
+    exit 1
+  fi
+
+  asset_url="$(printf '%s\n' "$release_json" \
+    | sed -n 's/.*"browser_download_url"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+    | grep "boltz-api_.*_${os}_${arch}.*\\.${ext}$" \
+    | head -n 1)"
+
+  if [ -n "$asset_url" ]; then
+    asset_tag="$(printf '%s\n' "$asset_url" | sed -n 's#.*/releases/download/\([^/]*\)/.*#\1#p' | head -n 1)"
+    if [ -n "$asset_tag" ]; then
+      tag="$asset_tag"
+    fi
+    if [ "$allow_release_fallback" -eq 1 ] && [ "$tag" != "$latest_tag" ]; then
+      echo "Latest boltz-api release ${latest_tag} has no ${os}/${arch} asset yet; installing ${tag} instead." >&2
+    fi
+    break
+  fi
+
+  if [ "$retry" -ge "$release_retries" ]; then
+    echo "No boltz-api release asset found for ${os}/${arch} in ${tag} after ${release_retries} retries" >&2
+    exit 1
+  fi
+
+  retry=$((retry + 1))
+  echo "No boltz-api release asset found for ${os}/${arch} in ${tag}; retrying in ${release_retry_delay}s (${retry}/${release_retries})" >&2
+  sleep "$release_retry_delay"
+done
+
+version_number="$(printf '%s' "$tag" | sed 's/^v//')"
 
 if [ -z "$install_dir" ]; then
   if command -v boltz-api >/dev/null 2>&1; then

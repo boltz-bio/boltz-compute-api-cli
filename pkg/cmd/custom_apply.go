@@ -42,6 +42,10 @@ func ApplyCustomizations(app *cli.Command) {
 
 	mergeAuthCommand(app)
 
+	if !hasCommand(app.Commands, configCommand.Name) {
+		app.Commands = append(app.Commands, configCommand)
+	}
+
 	if !hasCommand(app.Commands, downloadResultsCommand.Name) {
 		app.Commands = append(app.Commands, downloadResultsCommand)
 	}
