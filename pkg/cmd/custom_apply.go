@@ -40,9 +40,7 @@ func ApplyCustomizations(app *cli.Command) {
 		app.Flags = append(app.Flags, flag)
 	}
 
-	if !hasCommand(app.Commands, authCommand.Name) {
-		app.Commands = append(app.Commands, authCommand)
-	}
+	mergeAuthCommand(app)
 
 	if !hasCommand(app.Commands, downloadResultsCommand.Name) {
 		app.Commands = append(app.Commands, downloadResultsCommand)
@@ -120,12 +118,32 @@ func authFlags() []cli.Flag {
 }
 
 func hasCommand(commands []*cli.Command, name string) bool {
+	return findCommand(commands, name) != nil
+}
+
+func findCommand(commands []*cli.Command, name string) *cli.Command {
 	for _, command := range commands {
 		if command != nil && command.Name == name {
-			return true
+			return command
 		}
 	}
-	return false
+	return nil
+}
+
+func mergeAuthCommand(app *cli.Command) {
+	existing := findCommand(app.Commands, authCommand.Name)
+	if existing == nil {
+		app.Commands = append(app.Commands, authCommand)
+		return
+	}
+
+	// Stainless can generate API methods under `auth` (for example, `auth me`).
+	// Keep those generated subcommands and layer our custom login/session commands alongside them.
+	for _, customCommand := range authCommand.Commands {
+		if !hasCommand(existing.Commands, customCommand.Name) {
+			existing.Commands = append(existing.Commands, customCommand)
+		}
+	}
 }
 
 func hasFlag(flags []cli.Flag, candidate cli.Flag) bool {
