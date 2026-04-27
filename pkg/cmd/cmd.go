@@ -85,6 +85,14 @@ func init() {
 		},
 		Commands: []*cli.Command{
 			{
+				Name:     "auth-context",
+				Category: "API RESOURCE",
+				Suggest:  true,
+				Commands: []*cli.Command{
+					&authContextMe,
+				},
+			},
+			{
 				Name:     "predictions:structure-and-binding",
 				Category: "API RESOURCE",
 				Suggest:  true,
