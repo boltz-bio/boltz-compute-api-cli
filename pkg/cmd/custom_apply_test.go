@@ -52,6 +52,35 @@ func TestApplyCustomizationsIsIdempotent(t *testing.T) {
 	mustFindCommand(t, root, "download-status")
 }
 
+func TestApplyCustomizationsMergesGeneratedAuthCommand(t *testing.T) {
+	root := &cli.Command{
+		Name: "boltz-api",
+		Commands: []*cli.Command{
+			{
+				Name: "auth",
+				Commands: []*cli.Command{
+					{
+						Name: "me",
+					},
+				},
+			},
+		},
+	}
+
+	ApplyCustomizations(root)
+	ApplyCustomizations(root)
+
+	require.Len(t, root.Commands, 3)
+	auth := mustFindCommand(t, root, "auth")
+	mustFindCommand(t, auth, "me")
+	mustFindCommand(t, auth, "login")
+	mustFindCommand(t, auth, "status")
+	mustFindCommand(t, auth, "validate")
+	mustFindCommand(t, auth, "orgs")
+	mustFindCommand(t, auth, "switch-org")
+	require.Len(t, auth.Commands, len(authCommand.Commands)+1)
+}
+
 func TestApplyCustomizationsAnnotatesRepeatableArrayFlags(t *testing.T) {
 	t.Parallel()
 
