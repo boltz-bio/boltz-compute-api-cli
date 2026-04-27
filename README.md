@@ -33,11 +33,11 @@ choose a different install directory.
 For reproducible installs, pin a version:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | BOLTZ_API_VERSION=0.8.1 sh
+curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | BOLTZ_API_VERSION=0.9.0 sh
 ```
 
 ```powershell
-$env:BOLTZ_API_VERSION = "0.8.1"; irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+$env:BOLTZ_API_VERSION = "0.9.0"; irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
 ```
 
 ### Installing with Go
