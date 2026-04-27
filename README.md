@@ -30,6 +30,12 @@ existing binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and
 `%LOCALAPPDATA%\Programs\Boltz\bin` on Windows. Set `BOLTZ_API_INSTALL_DIR` to
 choose a different install directory.
 
+When a GitHub release is visible before its binary assets have finished
+uploading, the installer retries release lookup before failing. Set
+`BOLTZ_API_RELEASE_RETRIES` or `BOLTZ_API_RELEASE_RETRY_DELAY` to override the
+default retry count and delay. For unpinned `latest` installs, it will use the
+newest release that already has a matching platform asset.
+
 For reproducible installs, pin a version:
 
 ```sh
@@ -206,6 +212,8 @@ Available auth commands:
 - `boltz-api auth orgs`
 - `boltz-api auth wait`
 - `boltz-api auth switch-org <org>`
+- `boltz-api config show`
+- `boltz-api config reset`
 
 Command roles:
 
@@ -215,6 +223,8 @@ Command roles:
 - `auth orgs` - list organization IDs available to the current OAuth session or API key
 - `auth switch-org` - store the OAuth organization ID to send with compute API requests
 - `auth wait` - wait for usable local auth to appear, returning structured `success` or `waiting` status
+- `config show` - show the path and contents of the local non-secret config file
+- `config reset` - remove the local non-secret config file
 
 `auth status`, `auth validate`, `auth orgs`, and `auth wait` return structured output.
 They exit with code `1` when no usable auth mode is available. `auth status`
@@ -230,9 +240,13 @@ For machine callers that need to wait for a browser-based login to finish:
 boltz-api --format json auth wait --timeout 60s --poll-interval 2s
 ```
 
-The CLI stores non-secret auth configuration in:
+`auth status` includes the local config path and warns when the resolved OAuth
+issuer or client ID looks like a placeholder. The CLI stores non-secret auth
+configuration in:
 
-- `~/.config/boltz-compute/config.yaml`
+- macOS: `~/Library/Application Support/boltz-compute/config.yaml`
+- Linux: `~/.config/boltz-compute/config.yaml`
+- Windows: `%APPDATA%\boltz-compute\config.yaml`
 - `~/.cache/boltz-compute/session.json`
 
 Refresh tokens are stored in the OS keychain when available, with a fallback to:

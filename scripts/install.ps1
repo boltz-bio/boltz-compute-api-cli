@@ -1,7 +1,9 @@
 param(
     [string]$Repo = $(if ($env:BOLTZ_API_REPO) { $env:BOLTZ_API_REPO } else { "boltz-bio/boltz-compute-api-cli" }),
     [string]$Version = $(if ($env:BOLTZ_API_VERSION) { $env:BOLTZ_API_VERSION } else { "latest" }),
-    [string]$InstallDir = $env:BOLTZ_API_INSTALL_DIR
+    [string]$InstallDir = $env:BOLTZ_API_INSTALL_DIR,
+    [int]$ReleaseRetries = $(if ($env:BOLTZ_API_RELEASE_RETRIES) { [int]$env:BOLTZ_API_RELEASE_RETRIES } else { 12 }),
+    [int]$ReleaseRetryDelaySeconds = $(if ($env:BOLTZ_API_RELEASE_RETRY_DELAY) { [int]$env:BOLTZ_API_RELEASE_RETRY_DELAY } else { 10 })
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,6 +13,53 @@ function Fail($Message) {
     exit 1
 }
 
+if ($ReleaseRetries -lt 0) {
+    Fail "BOLTZ_API_RELEASE_RETRIES must be a non-negative integer"
+}
+
+if ($ReleaseRetryDelaySeconds -lt 0) {
+    Fail "BOLTZ_API_RELEASE_RETRY_DELAY must be a non-negative integer"
+}
+
+function Get-ConfigFilePath {
+    $base = [Environment]::GetFolderPath("ApplicationData")
+    if (-not $base) {
+        $base = Join-Path $HOME ".config"
+    }
+    Join-Path (Join-Path $base "boltz-compute") "config.yaml"
+}
+
+function Get-YamlScalar($Content, $Key) {
+    foreach ($line in $Content) {
+        if ($line -match "^\s*$([regex]::Escape($Key)):\s*['""]?([^'""]*)['""]?\s*$") {
+            return $Matches[1]
+        }
+    }
+    return ""
+}
+
+function Warn-ExistingConfig {
+    $configFile = Get-ConfigFilePath
+    if (-not (Test-Path $configFile)) {
+        return
+    }
+
+    $content = Get-Content -Path $configFile -ErrorAction SilentlyContinue
+    $configIssuer = Get-YamlScalar $content "issuer_url"
+    $configClient = Get-YamlScalar $content "client_id"
+
+    if ($configIssuer -and $configIssuer -ne "https://lab.boltz.bio") {
+        Write-Warning "Existing boltz-api config at $configFile sets auth issuer to $configIssuer."
+        Write-Warning "Run 'boltz-api config show' to inspect it or 'boltz-api config reset' to remove non-secret local config."
+    }
+    if ($configClient -and $configClient -ne "boltz-cli") {
+        Write-Warning "Existing boltz-api config at $configFile sets auth client ID to $configClient."
+        Write-Warning "Run 'boltz-api config show' to inspect it or 'boltz-api config reset' to remove non-secret local config."
+    }
+}
+
+Warn-ExistingConfig
+
 $arch = switch ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) {
     "X64" { "amd64" }
     "X86" { "386" }
@@ -19,7 +68,8 @@ $arch = switch ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitect
 }
 
 if ($Version -eq "latest") {
-    $releaseUrl = "https://api.github.com/repos/$Repo/releases/latest"
+    $releaseUrl = "https://api.github.com/repos/$Repo/releases?per_page=20"
+    $allowReleaseFallback = $true
 } else {
     if ($Version.StartsWith("v")) {
         $tag = $Version
@@ -27,22 +77,52 @@ if ($Version -eq "latest") {
         $tag = "v$Version"
     }
     $releaseUrl = "https://api.github.com/repos/$Repo/releases/tags/$tag"
+    $allowReleaseFallback = $false
 }
 
-$release = Invoke-RestMethod -Uri $releaseUrl -Headers @{ Accept = "application/vnd.github+json" }
-if (-not $release.tag_name) {
-    Fail "Could not determine the boltz-api release tag"
+$retry = 0
+while ($true) {
+    $releaseResponse = Invoke-RestMethod -Uri $releaseUrl -Headers @{ Accept = "application/vnd.github+json" }
+    $releaseCandidates = @($releaseResponse)
+    $latestTag = $releaseCandidates[0].tag_name
+    if (-not $latestTag) {
+        Fail "Could not determine the boltz-api release tag"
+    }
+
+    $release = $null
+    $asset = $null
+    foreach ($candidate in $releaseCandidates) {
+        $candidateAsset = $candidate.assets |
+            Where-Object { $_.name -match "^boltz-api_.*_windows_${arch}\.zip$" } |
+            Select-Object -First 1
+        if ($candidateAsset) {
+            $release = $candidate
+            $asset = $candidateAsset
+            break
+        }
+        if (-not $allowReleaseFallback) {
+            $release = $candidate
+            break
+        }
+    }
+
+    if ($asset) {
+        if ($allowReleaseFallback -and $release.tag_name -ne $latestTag) {
+            Write-Warning "Latest boltz-api release $latestTag has no windows/$arch asset yet; installing $($release.tag_name) instead."
+        }
+        break
+    }
+
+    if ($retry -ge $ReleaseRetries) {
+        Fail "No boltz-api release asset found for windows/$arch in $latestTag after $ReleaseRetries retries"
+    }
+
+    $retry += 1
+    Write-Warning "No boltz-api release asset found for windows/$arch in $latestTag; retrying in ${ReleaseRetryDelaySeconds}s ($retry/$ReleaseRetries)"
+    Start-Sleep -Seconds $ReleaseRetryDelaySeconds
 }
 
 $versionNumber = $release.tag_name -replace "^v", ""
-
-$asset = $release.assets |
-    Where-Object { $_.name -match "^boltz-api_.*_windows_${arch}\.zip$" } |
-    Select-Object -First 1
-
-if (-not $asset) {
-    Fail "No boltz-api release asset found for windows/$arch in $($release.tag_name)"
-}
 
 if (-not $InstallDir) {
     $existing = Get-Command boltz-api -ErrorAction SilentlyContinue

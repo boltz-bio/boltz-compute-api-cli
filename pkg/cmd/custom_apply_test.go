@@ -44,10 +44,11 @@ func TestApplyCustomizationsIsIdempotent(t *testing.T) {
 	ApplyCustomizations(root)
 	ApplyCustomizations(root)
 
-	require.Len(t, root.Commands, 3)
+	require.Len(t, root.Commands, 4)
 	require.Len(t, root.Flags, 12)
 	require.Equal(t, transformUsage, usageForFlag(t, mustFindFlag(t, root, "transform")))
 	mustFindCommand(t, root, "auth")
+	mustFindCommand(t, root, "config")
 	mustFindCommand(t, root, "download-results")
 	mustFindCommand(t, root, "download-status")
 }
@@ -70,7 +71,7 @@ func TestApplyCustomizationsMergesGeneratedAuthCommand(t *testing.T) {
 	ApplyCustomizations(root)
 	ApplyCustomizations(root)
 
-	require.Len(t, root.Commands, 3)
+	require.Len(t, root.Commands, 4)
 	auth := mustFindCommand(t, root, "auth")
 	mustFindCommand(t, auth, "me")
 	mustFindCommand(t, auth, "login")
