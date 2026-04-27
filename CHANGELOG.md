@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.8.1 (2026-04-26)
+
+Full Changelog: [v0.8.0...v0.8.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.8.0...v0.8.1)
+
+### Chores
+
+* **internal:** version bump ([384fdd4](https://github.com/boltz-bio/boltz-compute-api-cli/commit/384fdd47c7cf8852354dc73b20e137e00b9b89f2))
+* **internal:** version bump ([a513c20](https://github.com/boltz-bio/boltz-compute-api-cli/commit/a513c20e91df2f2d387e8cc8e6b491685ed238bb))
+
+
+### Documentation
+
+* **cli:** add cross-platform installer commands ([fc6a28a](https://github.com/boltz-bio/boltz-compute-api-cli/commit/fc6a28a1d98499f10506abfdecc7541454847156))
+
+## 0.8.0 (2026-04-26)
+
+Full Changelog: [v0.7.5...v0.8.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.7.5...v0.8.0)
+
+### Features
+
+* **compute-api:** prefix structure-binding ids with sab_pred ([1c60be9](https://github.com/boltz-bio/boltz-compute-api-cli/commit/1c60be991d4174ecfdc580953c8634c618fd8598))
+
+
+### Chores
+
+* **internal:** codegen related update ([3e7dcc9](https://github.com/boltz-bio/boltz-compute-api-cli/commit/3e7dcc9863323d02fc0df06acb63b07c485ea6cb))
+* **internal:** more robust bootstrap script ([a356ec3](https://github.com/boltz-bio/boltz-compute-api-cli/commit/a356ec3797a695168ffb9e3b174fe8da8efe860f))
+
+## 0.7.5 (2026-04-24)
+
+Full Changelog: [v0.7.4...v0.7.5](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.7.4...v0.7.5)
+
 ## 0.7.4 (2026-04-23)
 
 Full Changelog: [v0.7.3...v0.7.4](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.7.3...v0.7.4)

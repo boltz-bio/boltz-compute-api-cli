@@ -8,9 +8,41 @@ It is generated with [Stainless](https://www.stainless.com/).
 
 ## Installation
 
+### Install or update
+
+The recommended installer downloads the latest GitHub release for your
+platform. Rerun the same command to update an existing installation.
+
+macOS and Linux:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | sh
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+```
+
+By default, the installer updates an existing `boltz-api` on `PATH`. If no
+existing binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and
+`%LOCALAPPDATA%\Programs\Boltz\bin` on Windows. Set `BOLTZ_API_INSTALL_DIR` to
+choose a different install directory.
+
+For reproducible installs, pin a version:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | BOLTZ_API_VERSION=0.8.1 sh
+```
+
+```powershell
+$env:BOLTZ_API_VERSION = "0.8.1"; irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+```
+
 ### Installing with Go
 
-To test or install the CLI locally, you need [Go](https://go.dev/doc/install) version 1.25 or later installed.
+To build from source, you need [Go](https://go.dev/doc/install) version 1.25 or later installed.
 
 ```sh
 go install 'github.com/boltz-bio/boltz-compute-api-cli/cmd/boltz-api@latest'
