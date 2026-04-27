@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.0 (2026-04-27)
+
+Full Changelog: [v0.8.1...v0.9.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.8.1...v0.9.0)
+
+### Features
+
+* **compute-api:** add auth context endpoint ([0b89bd9](https://github.com/boltz-bio/boltz-compute-api-cli/commit/0b89bd98f8d1b5328f7f3958ad760e432f75efcb))
+* **compute:** create workspace keys internally ([92ab298](https://github.com/boltz-bio/boltz-compute-api-cli/commit/92ab29867712c4538fa23c1729e4e3dba9538e5c))
+
+
+### Bug Fixes
+
+* **auth:** merge generated auth commands ([0c24e3f](https://github.com/boltz-bio/boltz-compute-api-cli/commit/0c24e3f616ea06d4efcb31a9375f88baa9ce401f))
+* **stainless:** expose auth context as auth me ([4ada848](https://github.com/boltz-bio/boltz-compute-api-cli/commit/4ada848f3d52928a02cfe9728ec99062582a0183))
+
 ## 0.8.1 (2026-04-26)
 
 Full Changelog: [v0.8.0...v0.8.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.8.0...v0.8.1)
