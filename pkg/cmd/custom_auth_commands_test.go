@@ -226,6 +226,115 @@ func TestAuthValidateAPIKeyExplainsLocalOnlyCheck(t *testing.T) {
 	require.Contains(t, warnings, "API-key validation is local only; this command confirms that an API key is configured.")
 }
 
+func TestAuthOrgsListsOAuthOrganizations(t *testing.T) {
+	setAuthCommandUserDirs(t)
+	useFileOnlyKeyringForAuthCommandTests(t)
+
+	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
+		IssuerURL:   "https://issuer.example.com",
+		ClientID:    "client-123",
+		Audience:    authconfig.DefaultAudience,
+		Scopes:      []string{"openid", "profile"},
+		SelectedOrg: "org-second",
+	}))
+	require.NoError(t, authstore.SaveSession(authstore.Session{
+		IssuerURL:   "https://issuer.example.com",
+		ClientID:    "client-123",
+		Audience:    authconfig.DefaultAudience,
+		Scopes:      []string{"openid", "profile"},
+		AccessToken: "oauth-access",
+		TokenType:   "Bearer",
+		Expiry:      time.Now().Add(10 * time.Minute),
+	}))
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/compute/v1/auth/me", r.URL.Path)
+		require.Equal(t, "Bearer oauth-access", r.Header.Get("Authorization"))
+		require.Equal(t, "org-second", r.Header.Get("X-Boltz-Organization-Id"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"principal_type": "user",
+			"user_id": "user-123",
+			"selected_organization_id": "org-second",
+			"active_organization_id": null,
+			"organization_memberships": [
+				{"organization_id": "org-first", "role": "Admin"},
+				{"organization_id": "org-second", "role": "Scientist"}
+			]
+		}`))
+	}))
+	defer server.Close()
+
+	output, err := runAuthCommand(t, "--format", "json", "--base-url", server.URL, "auth", "orgs")
+	require.NoError(t, err)
+
+	var response map[string]any
+	require.NoError(t, json.Unmarshal([]byte(output), &response))
+	require.Equal(t, "user", response["principal_type"])
+	require.Equal(t, "org-second", response["selected_org"])
+
+	organizations, ok := response["organizations"].([]any)
+	require.True(t, ok)
+	require.Len(t, organizations, 2)
+	require.Equal(t, map[string]any{
+		"organization_id": "org-first",
+		"role":            "Admin",
+		"selected":        false,
+		"switchable":      true,
+	}, organizations[0])
+	require.Equal(t, map[string]any{
+		"organization_id": "org-second",
+		"role":            "Scientist",
+		"selected":        true,
+		"switchable":      true,
+	}, organizations[1])
+}
+
+func TestAuthOrgsShowsAPIKeyScope(t *testing.T) {
+	setAuthCommandUserDirs(t)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, "/compute/v1/auth/me", r.URL.Path)
+		require.Equal(t, "api-key-123", r.Header.Get("x-api-key"))
+		require.Empty(t, r.Header.Get("X-Boltz-Organization-Id"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"principal_type": "api_key",
+			"api_key_id": "key-123",
+			"key_type": "workspace",
+			"mode": "live",
+			"organization_id": "org-api",
+			"selected_organization_id": "org-api",
+			"workspace_id": "ws-api"
+		}`))
+	}))
+	defer server.Close()
+
+	output, err := runAuthCommand(t, "--format", "json", "--base-url", server.URL, "--api-key", "api-key-123", "auth", "orgs")
+	require.NoError(t, err)
+
+	var response map[string]any
+	require.NoError(t, json.Unmarshal([]byte(output), &response))
+	require.Equal(t, "api_key", response["principal_type"])
+	require.Equal(t, "org-api", response["selected_org"])
+
+	organizations, ok := response["organizations"].([]any)
+	require.True(t, ok)
+	require.Len(t, organizations, 1)
+	require.Equal(t, map[string]any{
+		"organization_id": "org-api",
+		"selected":        true,
+		"switchable":      false,
+	}, organizations[0])
+
+	apiKey, ok := response["api_key"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, "key-123", apiKey["api_key_id"])
+	require.Equal(t, "workspace", apiKey["key_type"])
+	require.Equal(t, "live", apiKey["mode"])
+	require.Equal(t, "ws-api", apiKey["workspace_id"])
+}
+
 func TestAuthLoginDoesNotPersistProfileOnFailure(t *testing.T) {
 	setAuthCommandUserDirs(t)
 	useFileOnlyKeyringForAuthCommandTests(t)
@@ -326,6 +435,7 @@ func newAuthTestRoot(writer *os.File) *cli.Command {
 		ErrWriter:      writer,
 		ExitErrHandler: func(context.Context, *cli.Command, error) {},
 		Flags: []cli.Flag{
+			&cli.StringFlag{Name: "base-url"},
 			&cli.StringFlag{Name: "format", Value: "auto"},
 			&cli.BoolFlag{Name: "raw-output"},
 			&cli.StringFlag{Name: "transform"},

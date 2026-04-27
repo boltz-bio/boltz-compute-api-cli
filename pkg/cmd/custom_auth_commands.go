@@ -16,6 +16,7 @@ import (
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authmode"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/oauthclient"
+	computeapi "github.com/boltz-bio/boltz-compute-api-go"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -76,6 +77,13 @@ var authCommand = &cli.Command{
 			HideHelpCommand: true,
 		},
 		{
+			Name:            "orgs",
+			Aliases:         []string{"organizations"},
+			Usage:           "List organizations available to the current credential",
+			Action:          handleAuthOrgs,
+			HideHelpCommand: true,
+		},
+		{
 			Name:            "wait",
 			Usage:           "Wait for usable local auth to become available",
 			Action:          handleAuthWait,
@@ -95,7 +103,7 @@ var authCommand = &cli.Command{
 		},
 		{
 			Name:            "switch-org",
-			Usage:           "Persist a local selected organization",
+			Usage:           "Persist a local selected organization for OAuth requests",
 			ArgsUsage:       "<org>",
 			Action:          handleAuthSwitchOrg,
 			HideHelpCommand: true,
@@ -186,6 +194,45 @@ type authValidateResponse struct {
 	StoredOAuthSession  *oauthSessionDetails `json:"stored_oauth_session,omitempty"`
 	Warnings            []string             `json:"warnings,omitempty"`
 	Actions             []string             `json:"actions,omitempty"`
+}
+
+type authMeResponse struct {
+	PrincipalType           string                     `json:"principal_type"`
+	UserID                  string                     `json:"user_id,omitempty"`
+	APIKeyID                string                     `json:"api_key_id,omitempty"`
+	KeyType                 string                     `json:"key_type,omitempty"`
+	Mode                    string                     `json:"mode,omitempty"`
+	OrganizationID          string                     `json:"organization_id,omitempty"`
+	SelectedOrganizationID  string                     `json:"selected_organization_id,omitempty"`
+	ActiveOrganizationID    string                     `json:"active_organization_id,omitempty"`
+	WorkspaceID             *string                    `json:"workspace_id,omitempty"`
+	OrganizationMemberships []authMeOrganizationMember `json:"organization_memberships,omitempty"`
+}
+
+type authMeOrganizationMember struct {
+	OrganizationID string `json:"organization_id"`
+	Role           string `json:"role"`
+}
+
+type authOrganizationsResponse struct {
+	PrincipalType string                    `json:"principal_type"`
+	SelectedOrg   string                    `json:"selected_org,omitempty"`
+	Organizations []authOrganizationSummary `json:"organizations"`
+	APIKey        *authAPIKeySummary        `json:"api_key,omitempty"`
+}
+
+type authOrganizationSummary struct {
+	OrganizationID string `json:"organization_id"`
+	Role           string `json:"role,omitempty"`
+	Selected       bool   `json:"selected"`
+	Switchable     bool   `json:"switchable"`
+}
+
+type authAPIKeySummary struct {
+	APIKeyID    string  `json:"api_key_id"`
+	KeyType     string  `json:"key_type"`
+	Mode        string  `json:"mode"`
+	WorkspaceID *string `json:"workspace_id,omitempty"`
 }
 
 type authWaitResponse struct {
@@ -578,6 +625,15 @@ func handleAuthValidate(ctx context.Context, cmd *cli.Command) error {
 	return showJSONValue(cmd, validate, "auth validate")
 }
 
+func handleAuthOrgs(ctx context.Context, cmd *cli.Command) error {
+	me, err := fetchAuthMe(ctx, cmd)
+	if err != nil {
+		return autherror.New("auth_context_failed", "Failed to load compute auth context", err.Error())
+	}
+
+	return showJSONValue(cmd, buildAuthOrganizationsResponse(me), "auth orgs")
+}
+
 func handleAuthWait(ctx context.Context, cmd *cli.Command) error {
 	timeout := cmd.Duration("timeout")
 	pollInterval := cmd.Duration("poll-interval")
@@ -654,6 +710,50 @@ func handleAuthSwitchOrg(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	return showJSONValue(cmd, map[string]string{"selected_org": org}, "auth switch-org")
+}
+
+func fetchAuthMe(ctx context.Context, cmd *cli.Command) (authMeResponse, error) {
+	client := computeapi.NewClient(getDefaultRequestOptions(cmd)...)
+	var response authMeResponse
+	if err := client.Get(ctx, "/compute/v1/auth/me", nil, &response); err != nil {
+		return authMeResponse{}, err
+	}
+	return response, nil
+}
+
+func buildAuthOrganizationsResponse(me authMeResponse) authOrganizationsResponse {
+	selectedOrg := strings.TrimSpace(me.SelectedOrganizationID)
+	response := authOrganizationsResponse{
+		PrincipalType: me.PrincipalType,
+		SelectedOrg:   selectedOrg,
+	}
+
+	switch me.PrincipalType {
+	case "api_key":
+		response.Organizations = []authOrganizationSummary{{
+			OrganizationID: me.OrganizationID,
+			Selected:       true,
+			Switchable:     false,
+		}}
+		response.APIKey = &authAPIKeySummary{
+			APIKeyID:    me.APIKeyID,
+			KeyType:     me.KeyType,
+			Mode:        me.Mode,
+			WorkspaceID: me.WorkspaceID,
+		}
+	case "user":
+		response.Organizations = make([]authOrganizationSummary, 0, len(me.OrganizationMemberships))
+		for _, membership := range me.OrganizationMemberships {
+			response.Organizations = append(response.Organizations, authOrganizationSummary{
+				OrganizationID: membership.OrganizationID,
+				Role:           membership.Role,
+				Selected:       selectedOrg != "" && membership.OrganizationID == selectedOrg,
+				Switchable:     true,
+			})
+		}
+	}
+
+	return response
 }
 
 type authSnapshot struct {

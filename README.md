@@ -203,6 +203,7 @@ Available auth commands:
 - `boltz-api auth whoami`
 - `boltz-api auth status`
 - `boltz-api auth validate`
+- `boltz-api auth orgs`
 - `boltz-api auth wait`
 - `boltz-api auth switch-org <org>`
 
@@ -211,9 +212,11 @@ Command roles:
 - `auth whoami` - concise local identity and current mode
 - `auth status` - stable machine-readable auth diagnostics without refreshing
 - `auth validate` - local auth check that may refresh an expired OAuth access token
+- `auth orgs` - list organization IDs available to the current OAuth session or API key
+- `auth switch-org` - store the OAuth organization ID to send with compute API requests
 - `auth wait` - wait for usable local auth to appear, returning structured `success` or `waiting` status
 
-`auth status`, `auth validate`, and `auth wait` return structured output.
+`auth status`, `auth validate`, `auth orgs`, and `auth wait` return structured output.
 They exit with code `1` when no usable auth mode is available. `auth status`
 remains read-only; `auth validate` may refresh an expired OAuth access token
 using the stored refresh token; `auth wait` stays read-only and polls local auth

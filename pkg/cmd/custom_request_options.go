@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authmode"
@@ -36,6 +37,9 @@ func additionalRequestOptions(cmd *cli.Command) []option.RequestOption {
 			if auth.Mode == authmode.ModeOAuth {
 				r.Header.Del("x-api-key")
 				r.Header.Set("Authorization", "Bearer "+auth.AccessToken)
+				if selectedOrg := strings.TrimSpace(resolved.SelectedOrg); selectedOrg != "" {
+					r.Header.Set("X-Boltz-Organization-Id", selectedOrg)
+				}
 			}
 
 			return mn(r)
