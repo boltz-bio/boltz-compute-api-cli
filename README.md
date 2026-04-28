@@ -126,7 +126,6 @@ OAuth mode can also be configured with:
 - `BOLTZ_COMPUTE_AUTH_USERINFO_URL`
 - `BOLTZ_COMPUTE_AUTH_REVOCATION_URL`
 - `BOLTZ_COMPUTE_ORG`
-- `BOLTZ_COMPUTE_NO_BROWSER`
 - `BOLTZ_COMPUTE_LISTEN_PORT`
 
 ### Global flags
@@ -149,7 +148,6 @@ OAuth mode can also be configured with:
 - `--auth-userinfo-url` - Override the discovered userinfo endpoint
 - `--auth-revocation-url` - Override the discovered revocation endpoint
 - `--org` - Persist or override the local selected organization
-- `--no-browser` - Print the OAuth URL without opening a browser
 - `--listen-port` - Bind the OAuth loopback listener to a specific port
 
 ### OAuth authentication
@@ -166,12 +164,6 @@ Start a login flow with:
 
 ```sh
 boltz-api auth login
-```
-
-For remote or headless usage, print the URL instead of opening a browser:
-
-```sh
-boltz-api auth login --no-browser
 ```
 
 For agent or MCP subprocess usage where a localhost callback is not practical,

@@ -107,11 +107,6 @@ func authFlags() []cli.Flag {
 			Usage:   "Local organization selection used by auth commands and future org context",
 			Sources: cli.EnvVars(authconfig.EnvOrg),
 		},
-		&cli.BoolFlag{
-			Name:    "no-browser",
-			Usage:   "Print the OAuth URL without trying to open a browser",
-			Sources: cli.EnvVars(authconfig.EnvNoBrowser),
-		},
 		&cli.IntFlag{
 			Name:    "listen-port",
 			Value:   authconfig.DefaultListenPort,
