@@ -290,7 +290,6 @@ func handleAuthLogin(ctx context.Context, cmd *cli.Command) error {
 		UserInfoURL:      resolved.UserInfoURL,
 		RevocationURL:    resolved.RevocationURL,
 		ListenPort:       resolved.ListenPort,
-		NoBrowser:        resolved.NoBrowser,
 		Output:           writer,
 		OnDeviceCode:     jsonEvents.deviceCode,
 	}

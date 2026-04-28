@@ -41,7 +41,6 @@ type Config struct {
 	UserInfoURL      string
 	RevocationURL    string
 	ListenPort       int
-	NoBrowser        bool
 	HTTPClient       *http.Client
 	Output           io.Writer
 	OnDeviceCode     func(DeviceAuthorization)
@@ -211,10 +210,8 @@ func Login(ctx context.Context, cfg Config) (*LoginResult, error) {
 	if cfg.Output != nil {
 		fmt.Fprintf(cfg.Output, "Open this URL to authenticate:\n%s\n", authURL)
 	}
-	if !cfg.NoBrowser {
-		if err := openBrowser(authURL); err != nil && cfg.Output != nil {
-			fmt.Fprintf(cfg.Output, "Could not open browser automatically: %v\n", err)
-		}
+	if err := openBrowser(authURL); err != nil && cfg.Output != nil {
+		fmt.Fprintf(cfg.Output, "Could not open browser automatically: %v\n", err)
 	}
 
 	code, err := waitForCallback(ctx, listener, state)
@@ -307,7 +304,7 @@ func DeviceLogin(ctx context.Context, cfg Config) (*LoginResult, error) {
 			fmt.Fprintf(cfg.Output, "Enter this code:\n%s\n", device.UserCode)
 		}
 	}
-	if !cfg.NoBrowser && verificationURL != "" {
+	if verificationURL != "" {
 		if err := openBrowser(verificationURL); err != nil && cfg.Output != nil {
 			fmt.Fprintf(cfg.Output, "Could not open browser automatically: %v\n", err)
 		}

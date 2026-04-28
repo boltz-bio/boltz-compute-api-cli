@@ -94,7 +94,6 @@ func resolveForArgs(t *testing.T, args ...string) Resolved {
 			&cli.StringFlag{Name: "auth-userinfo-url", Sources: cli.EnvVars(EnvAuthUserInfoURL)},
 			&cli.StringFlag{Name: "auth-revocation-url", Sources: cli.EnvVars(EnvAuthRevocationURL)},
 			&cli.StringFlag{Name: "org", Sources: cli.EnvVars(EnvOrg)},
-			&cli.BoolFlag{Name: "no-browser", Sources: cli.EnvVars(EnvNoBrowser)},
 			&cli.IntFlag{Name: "listen-port", Sources: cli.EnvVars(EnvListenPort)},
 		},
 		Commands: []*cli.Command{

@@ -36,9 +36,10 @@ func TestAuthStatusSubprocessReturnsJSONAndExitOneWhenUnauthenticated(t *testing
 	require.Equal(t, "none", response["effective_mode"])
 }
 
-func TestAuthLoginNoBrowserSubprocessCreatesSession(t *testing.T) {
+func TestAuthLoginSubprocessCreatesSession(t *testing.T) {
 	binary := buildCLIBinary(t)
 	env := authProcessEnv(t)
+	env = installFakeBrowserOpener(t, env)
 	provider := newSubprocessOIDCProvider(t)
 	defer provider.Close()
 
@@ -47,7 +48,6 @@ func TestAuthLoginNoBrowserSubprocessCreatesSession(t *testing.T) {
 
 	cmd := exec.CommandContext(ctx, binary,
 		"auth", "login",
-		"--no-browser",
 		"--auth-issuer-url", provider.IssuerURL(),
 		"--auth-client-id", "client-123",
 		"--auth-scope", "openid",
@@ -245,6 +245,38 @@ func authProcessEnv(t *testing.T) []string {
 		"BOLTZ_COMPUTE_TEST_DISABLE_KEYRING=1",
 	)
 	return env
+}
+
+func installFakeBrowserOpener(t *testing.T, env []string) []string {
+	t.Helper()
+
+	dir := t.TempDir()
+	name := "xdg-open"
+	body := "#!/bin/sh\nexit 0\n"
+	if runtime.GOOS == "darwin" {
+		name = "open"
+	}
+	if runtime.GOOS == "windows" {
+		name = "rundll32.bat"
+		body = "@echo off\r\nexit /b 0\r\n"
+	}
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, name), []byte(body), 0o755))
+	path := dir + string(os.PathListSeparator) + os.Getenv("PATH")
+	result := make([]string, 0, len(env)+1)
+	replaced := false
+	for _, entry := range env {
+		if strings.HasPrefix(entry, "PATH=") {
+			result = append(result, "PATH="+path)
+			replaced = true
+			continue
+		}
+		result = append(result, entry)
+	}
+	if !replaced {
+		result = append(result, "PATH="+path)
+	}
+	return result
 }
 
 type subprocessTestKeyringBackend struct {

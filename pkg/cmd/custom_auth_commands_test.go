@@ -371,7 +371,6 @@ func TestAuthLoginDoesNotPersistProfileOnFailure(t *testing.T) {
 
 	_, err := runAuthCommand(t,
 		"auth", "login",
-		"--no-browser",
 		"--auth-issuer-url", "http://127.0.0.1:1",
 		"--auth-client-id", "client-123",
 	)

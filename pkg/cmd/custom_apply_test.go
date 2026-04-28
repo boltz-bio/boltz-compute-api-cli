@@ -45,8 +45,9 @@ func TestApplyCustomizationsIsIdempotent(t *testing.T) {
 	ApplyCustomizations(root)
 
 	require.Len(t, root.Commands, 4)
-	require.Len(t, root.Flags, 12)
+	require.Len(t, root.Flags, 11)
 	require.Equal(t, transformUsage, usageForFlag(t, mustFindFlag(t, root, "transform")))
+	require.Nil(t, findFlag(root, "no-browser"))
 	mustFindCommand(t, root, "auth")
 	mustFindCommand(t, root, "config")
 	mustFindCommand(t, root, "download-results")

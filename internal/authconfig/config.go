@@ -22,7 +22,6 @@ const (
 	EnvAuthUserInfoURL      = "BOLTZ_COMPUTE_AUTH_USERINFO_URL"
 	EnvAuthRevocationURL    = "BOLTZ_COMPUTE_AUTH_REVOCATION_URL"
 	EnvOrg                  = "BOLTZ_COMPUTE_ORG"
-	EnvNoBrowser            = "BOLTZ_COMPUTE_NO_BROWSER"
 	EnvListenPort           = "BOLTZ_COMPUTE_LISTEN_PORT"
 )
 
@@ -72,7 +71,6 @@ type Resolved struct {
 	UserInfoURL      string
 	RevocationURL    string
 	SelectedOrg      string
-	NoBrowser        bool
 	ListenPort       int
 	Sources          Sources
 }
@@ -88,7 +86,6 @@ type Sources struct {
 	UserInfoURL      Source
 	RevocationURL    Source
 	SelectedOrg      Source
-	NoBrowser        Source
 	ListenPort       Source
 }
 
@@ -146,7 +143,6 @@ func Resolve(cmd *cli.Command) (Resolved, error) {
 	userInfoURL, userInfoURLSource := resolveString(root, config.UserInfoURL, "auth-userinfo-url")
 	revocationURL, revocationSource := resolveString(root, config.RevocationURL, "auth-revocation-url")
 	selectedOrg, selectedOrgSource := resolveString(root, config.SelectedOrg, "org")
-	noBrowser, noBrowserSource := resolveBool(root, false, "no-browser")
 	listenPort, listenPortSource := resolveInt(root, DefaultListenPort, "listen-port")
 
 	return Resolved{
@@ -160,7 +156,6 @@ func Resolve(cmd *cli.Command) (Resolved, error) {
 		UserInfoURL:      userInfoURL,
 		RevocationURL:    revocationURL,
 		SelectedOrg:      selectedOrg,
-		NoBrowser:        noBrowser,
 		ListenPort:       listenPort,
 		Sources: Sources{
 			APIKey:           apiKeySource,
@@ -173,7 +168,6 @@ func Resolve(cmd *cli.Command) (Resolved, error) {
 			UserInfoURL:      userInfoURLSource,
 			RevocationURL:    revocationSource,
 			SelectedOrg:      selectedOrgSource,
-			NoBrowser:        noBrowserSource,
 			ListenPort:       listenPortSource,
 		},
 	}, nil
@@ -239,13 +233,6 @@ func resolveString(root *cli.Command, fallback string, name string) (string, Sou
 		return value, SourceConfig
 	}
 	return "", SourceUnset
-}
-
-func resolveBool(root *cli.Command, fallback bool, name string) (bool, Source) {
-	if root.IsSet(name) {
-		return root.Bool(name), SourceRuntime
-	}
-	return fallback, SourceDefault
 }
 
 func resolveInt(root *cli.Command, fallback int, name string) (int, Source) {
