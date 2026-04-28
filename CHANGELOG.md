@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.1 (2026-04-28)
+
+Full Changelog: [v0.10.0...v0.10.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.10.0...v0.10.1)
+
+### Bug Fixes
+
+* **auth:** remove no-browser login option ([b7fdbb5](https://github.com/boltz-bio/boltz-compute-api-cli/commit/b7fdbb5425dc0203738aefecbf867029156f5098))
+
 ## 0.10.0 (2026-04-28)
 
 Full Changelog: [v0.9.1...v0.10.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.9.1...v0.10.0)

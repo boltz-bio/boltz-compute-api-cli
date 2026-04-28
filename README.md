@@ -39,11 +39,11 @@ newest release that already has a matching platform asset.
 For reproducible installs, pin a version:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | BOLTZ_API_VERSION=0.10.0 sh
+curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | BOLTZ_API_VERSION=0.10.1 sh
 ```
 
 ```powershell
-$env:BOLTZ_API_VERSION = "0.10.0"; irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+$env:BOLTZ_API_VERSION = "0.10.1"; irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
 ```
 
 ### Installing with Go
