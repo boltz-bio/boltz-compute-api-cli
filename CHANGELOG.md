@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.10.0 (2026-04-28)
+
+Full Changelog: [v0.9.1...v0.10.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.9.1...v0.10.0)
+
+### Features
+
+* **compute-api:** add CLI version metadata endpoint ([4f5cc87](https://github.com/boltz-bio/boltz-compute-api-cli/commit/4f5cc8743a328c0c3bd700a7b5437289bc5aece0))
+
+
+### Bug Fixes
+
+* revert generated SDK dependency bump ([957c84c](https://github.com/boltz-bio/boltz-compute-api-cli/commit/957c84cf4b0736cab4eb87c5c9a0a8b4fc5d6f2a))
+
+
+### Chores
+
+* **internal:** codegen related update ([21d8fb7](https://github.com/boltz-bio/boltz-compute-api-cli/commit/21d8fb7a2f1a2695ba48906b061a3a0666585473))
+
 ## 0.9.1 (2026-04-27)
 
 Full Changelog: [v0.9.0...v0.9.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.9.0...v0.9.1)
