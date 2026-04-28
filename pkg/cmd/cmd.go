@@ -85,6 +85,14 @@ func init() {
 		},
 		Commands: []*cli.Command{
 			{
+				Name:     "cli",
+				Category: "API RESOURCE",
+				Suggest:  true,
+				Commands: []*cli.Command{
+					&cliVersion,
+				},
+			},
+			{
 				Name:     "auth",
 				Category: "API RESOURCE",
 				Suggest:  true,
