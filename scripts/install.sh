@@ -5,6 +5,8 @@ set -eu
 repo="${BOLTZ_API_REPO:-boltz-bio/boltz-compute-api-cli}"
 version="${BOLTZ_API_VERSION:-latest}"
 install_dir="${BOLTZ_API_INSTALL_DIR:-}"
+install_base_url="${BOLTZ_API_INSTALL_BASE_URL:-https://install.boltz.bio/boltz-api}"
+github_fallback="${BOLTZ_API_GITHUB_FALLBACK:-1}"
 release_retries="${BOLTZ_API_RELEASE_RETRIES:-12}"
 release_retry_delay="${BOLTZ_API_RELEASE_RETRY_DELAY:-10}"
 
@@ -81,25 +83,59 @@ case "$(uname -m)" in
 esac
 
 if [ "$version" = "latest" ]; then
-  release_url="https://api.github.com/repos/${repo}/releases?per_page=20"
+  tag=""
+  install_base_url="${install_base_url%/}"
+  aws_release_url="${install_base_url}/latest.json"
+  github_release_url="https://api.github.com/repos/${repo}/releases?per_page=20"
   allow_release_fallback=1
 else
   case "$version" in
     v*) tag="$version" ;;
     *) tag="v$version" ;;
   esac
-  release_url="https://api.github.com/repos/${repo}/releases/tags/${tag}"
+  install_base_url="${install_base_url%/}"
+  aws_release_url="${install_base_url}/releases/${tag}/release.json"
+  github_release_url="https://api.github.com/repos/${repo}/releases/tags/${tag}"
   allow_release_fallback=0
 fi
+
+release_source="aws"
+release_url="$aws_release_url"
 
 case "$os" in
   macos) ext="zip" ;;
   linux) ext="tar.gz" ;;
 esac
 
+fetch_release_json() {
+  case "$release_source" in
+    github) curl -fsSL -H "Accept: application/vnd.github+json" "$release_url" ;;
+    *) curl -fsSL "$release_url" ;;
+  esac
+}
+
+switch_to_github_release() {
+  if [ "$release_source" = "aws" ] && [ "$github_fallback" != "0" ]; then
+    echo "$1; falling back to GitHub releases." >&2
+    release_source="github"
+    release_url="$github_release_url"
+    retry=0
+    return 0
+  fi
+
+  return 1
+}
+
 retry=0
 while :; do
-  release_json="$(curl -fsSL -H "Accept: application/vnd.github+json" "$release_url")"
+  if ! release_json="$(fetch_release_json 2>/dev/null)"; then
+    if switch_to_github_release "Could not fetch boltz-api release metadata from ${release_url}"; then
+      continue
+    fi
+    echo "Could not fetch boltz-api release metadata from ${release_url}" >&2
+    exit 1
+  fi
+
   tag="$(printf '%s\n' "$release_json" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
   latest_tag="$tag"
 
@@ -115,6 +151,9 @@ while :; do
 
   if [ -n "$asset_url" ]; then
     asset_tag="$(printf '%s\n' "$asset_url" | sed -n 's#.*/releases/download/\([^/]*\)/.*#\1#p' | head -n 1)"
+    if [ -z "$asset_tag" ]; then
+      asset_tag="$(printf '%s\n' "$asset_url" | sed -n 's#.*/releases/\([^/]*\)/.*#\1#p' | head -n 1)"
+    fi
     if [ -n "$asset_tag" ]; then
       tag="$asset_tag"
     fi
@@ -125,6 +164,9 @@ while :; do
   fi
 
   if [ "$retry" -ge "$release_retries" ]; then
+    if switch_to_github_release "No boltz-api release asset found for ${os}/${arch} in ${tag} after ${release_retries} retries from ${release_source}"; then
+      continue
+    fi
     echo "No boltz-api release asset found for ${os}/${arch} in ${tag} after ${release_retries} retries" >&2
     exit 1
   fi

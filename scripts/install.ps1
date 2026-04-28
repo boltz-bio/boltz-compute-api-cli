@@ -2,6 +2,8 @@ param(
     [string]$Repo = $(if ($env:BOLTZ_API_REPO) { $env:BOLTZ_API_REPO } else { "boltz-bio/boltz-compute-api-cli" }),
     [string]$Version = $(if ($env:BOLTZ_API_VERSION) { $env:BOLTZ_API_VERSION } else { "latest" }),
     [string]$InstallDir = $env:BOLTZ_API_INSTALL_DIR,
+    [string]$InstallBaseUrl = $(if ($env:BOLTZ_API_INSTALL_BASE_URL) { $env:BOLTZ_API_INSTALL_BASE_URL } else { "https://install.boltz.bio/boltz-api" }),
+    [string]$GithubFallback = $(if ($env:BOLTZ_API_GITHUB_FALLBACK) { $env:BOLTZ_API_GITHUB_FALLBACK } else { "1" }),
     [int]$ReleaseRetries = $(if ($env:BOLTZ_API_RELEASE_RETRIES) { [int]$env:BOLTZ_API_RELEASE_RETRIES } else { 12 }),
     [int]$ReleaseRetryDelaySeconds = $(if ($env:BOLTZ_API_RELEASE_RETRY_DELAY) { [int]$env:BOLTZ_API_RELEASE_RETRY_DELAY } else { 10 })
 )
@@ -68,7 +70,9 @@ $arch = switch ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitect
 }
 
 if ($Version -eq "latest") {
-    $releaseUrl = "https://api.github.com/repos/$Repo/releases?per_page=20"
+    $InstallBaseUrl = $InstallBaseUrl.TrimEnd("/")
+    $awsReleaseUrl = "$InstallBaseUrl/latest.json"
+    $githubReleaseUrl = "https://api.github.com/repos/$Repo/releases?per_page=20"
     $allowReleaseFallback = $true
 } else {
     if ($Version.StartsWith("v")) {
@@ -76,13 +80,42 @@ if ($Version -eq "latest") {
     } else {
         $tag = "v$Version"
     }
-    $releaseUrl = "https://api.github.com/repos/$Repo/releases/tags/$tag"
+    $InstallBaseUrl = $InstallBaseUrl.TrimEnd("/")
+    $awsReleaseUrl = "$InstallBaseUrl/releases/$tag/release.json"
+    $githubReleaseUrl = "https://api.github.com/repos/$Repo/releases/tags/$tag"
     $allowReleaseFallback = $false
 }
 
-$retry = 0
+function Switch-ToGitHubRelease($Message) {
+    if ($script:releaseSource -eq "aws" -and $GithubFallback -ne "0") {
+        Write-Warning "$Message; falling back to GitHub releases."
+        $script:releaseSource = "github"
+        $script:releaseUrl = $script:githubReleaseUrl
+        $script:retry = 0
+        return $true
+    }
+
+    return $false
+}
+
+$script:releaseSource = "aws"
+$script:releaseUrl = $awsReleaseUrl
+$script:githubReleaseUrl = $githubReleaseUrl
+$script:retry = 0
 while ($true) {
-    $releaseResponse = Invoke-RestMethod -Uri $releaseUrl -Headers @{ Accept = "application/vnd.github+json" }
+    try {
+        if ($script:releaseSource -eq "github") {
+            $releaseResponse = Invoke-RestMethod -Uri $script:releaseUrl -Headers @{ Accept = "application/vnd.github+json" }
+        } else {
+            $releaseResponse = Invoke-RestMethod -Uri $script:releaseUrl
+        }
+    } catch {
+        if (Switch-ToGitHubRelease "Could not fetch boltz-api release metadata from $($script:releaseUrl)") {
+            continue
+        }
+        Fail "Could not fetch boltz-api release metadata from $($script:releaseUrl)"
+    }
+
     $releaseCandidates = @($releaseResponse)
     $latestTag = $releaseCandidates[0].tag_name
     if (-not $latestTag) {
@@ -98,6 +131,9 @@ while ($true) {
         if ($candidateAsset) {
             $release = $candidate
             $asset = $candidateAsset
+            if ($asset.browser_download_url -match "/releases/(?:download/)?([^/]+)/") {
+                $release.tag_name = $Matches[1]
+            }
             break
         }
         if (-not $allowReleaseFallback) {
@@ -113,12 +149,15 @@ while ($true) {
         break
     }
 
-    if ($retry -ge $ReleaseRetries) {
+    if ($script:retry -ge $ReleaseRetries) {
+        if (Switch-ToGitHubRelease "No boltz-api release asset found for windows/$arch in $latestTag after $ReleaseRetries retries from $($script:releaseSource)") {
+            continue
+        }
         Fail "No boltz-api release asset found for windows/$arch in $latestTag after $ReleaseRetries retries"
     }
 
-    $retry += 1
-    Write-Warning "No boltz-api release asset found for windows/$arch in $latestTag; retrying in ${ReleaseRetryDelaySeconds}s ($retry/$ReleaseRetries)"
+    $script:retry += 1
+    Write-Warning "No boltz-api release asset found for windows/$arch in $latestTag; retrying in ${ReleaseRetryDelaySeconds}s ($script:retry/$ReleaseRetries)"
     Start-Sleep -Seconds $ReleaseRetryDelaySeconds
 }
 
