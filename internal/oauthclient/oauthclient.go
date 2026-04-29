@@ -23,7 +23,7 @@ import (
 
 const (
 	callbackPath          = "/oauth/callback"
-	callbackTimeout       = 5 * time.Minute
+	callbackTimeout       = 15 * time.Minute
 	deviceCodeGrantType   = "urn:ietf:params:oauth:grant-type:device_code"
 	devicePollingMaxDelay = 30 * time.Second
 	httpTimeout           = 15 * time.Second
@@ -847,7 +847,11 @@ func waitForCallback(ctx context.Context, listener net.Listener, expectedState s
 		return result.code, result.err
 	case <-waitCtx.Done():
 		if errors.Is(waitCtx.Err(), context.DeadlineExceeded) {
-			return "", fmt.Errorf("timed out waiting for authorization callback")
+			return "", fmt.Errorf(
+				"timed out waiting for authorization callback after %s; the browser callback listener on %s has closed. Run `boltz-api auth login` again, or use `boltz-api auth login --device-code` if localhost callbacks are unreliable",
+				callbackTimeout,
+				listener.Addr().String(),
+			)
 		}
 		return "", waitCtx.Err()
 	}
