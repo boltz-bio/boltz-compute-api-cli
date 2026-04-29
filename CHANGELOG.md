@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.2 (2026-04-29)
+
+Full Changelog: [v0.10.1...v0.10.2](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.10.1...v0.10.2)
+
+### Bug Fixes
+
+* **install:** make latest metadata updates monotonic ([063b5e3](https://github.com/boltz-bio/boltz-compute-api-cli/commit/063b5e35ad6e038e949feb6af13638bac08064bf))
+* **install:** remove GitHub release fallback ([6a07330](https://github.com/boltz-bio/boltz-compute-api-cli/commit/6a073306e25ac7a14f4a13334728c60bc85a39aa))
+
 ## 0.10.1 (2026-04-28)
 
 Full Changelog: [v0.10.0...v0.10.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.10.0...v0.10.1)
