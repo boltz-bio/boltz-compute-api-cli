@@ -108,16 +108,18 @@ aws s3 cp "$release_json" "${release_s3_uri}/release.json" \
   --content-type "application/json; charset=utf-8" \
   --cache-control "$immutable_cache_control"
 
-aws s3 cp "$release_json" "${s3_uri}/latest.json" \
-  --content-type "application/json; charset=utf-8" \
-  --cache-control "$mutable_cache_control"
-
 aws s3 cp "scripts/install.sh" "${s3_uri}/install.sh" \
   --content-type "text/x-shellscript; charset=utf-8" \
   --cache-control "$mutable_cache_control"
 
 aws s3 cp "scripts/install.ps1" "${s3_uri}/install.ps1" \
   --content-type "text/plain; charset=utf-8" \
+  --cache-control "$mutable_cache_control"
+
+# Publish latest metadata last so installers never observe a latest.json that
+# points at release artifacts that have not been uploaded yet.
+aws s3 cp "$release_json" "${s3_uri}/latest.json" \
+  --content-type "application/json; charset=utf-8" \
   --cache-control "$mutable_cache_control"
 
 if [ -n "$distribution_id" ]; then

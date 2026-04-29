@@ -31,9 +31,7 @@ existing binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and
 choose a different install directory.
 
 The installer uses `https://install.boltz.bio/boltz-api` for release metadata
-and binary downloads. If the install CDN is unavailable, it falls back to GitHub
-releases by default. Set `BOLTZ_API_GITHUB_FALLBACK=0` to disable that fallback,
-or set `BOLTZ_API_INSTALL_BASE_URL` to use a mirror. Set
+and binary downloads. Set `BOLTZ_API_INSTALL_BASE_URL` to use a mirror. Set
 `BOLTZ_API_RELEASE_RETRIES` or `BOLTZ_API_RELEASE_RETRY_DELAY` to override the
 default retry count and delay.
 

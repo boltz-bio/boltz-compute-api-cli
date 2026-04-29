@@ -2,11 +2,9 @@
 
 set -eu
 
-repo="${BOLTZ_API_REPO:-boltz-bio/boltz-compute-api-cli}"
 version="${BOLTZ_API_VERSION:-latest}"
 install_dir="${BOLTZ_API_INSTALL_DIR:-}"
 install_base_url="${BOLTZ_API_INSTALL_BASE_URL:-https://install.boltz.bio/boltz-api}"
-github_fallback="${BOLTZ_API_GITHUB_FALLBACK:-1}"
 release_retries="${BOLTZ_API_RELEASE_RETRIES:-12}"
 release_retry_delay="${BOLTZ_API_RELEASE_RETRY_DELAY:-10}"
 
@@ -85,8 +83,7 @@ esac
 if [ "$version" = "latest" ]; then
   tag=""
   install_base_url="${install_base_url%/}"
-  aws_release_url="${install_base_url}/latest.json"
-  github_release_url="https://api.github.com/repos/${repo}/releases?per_page=20"
+  release_url="${install_base_url}/latest.json"
   allow_release_fallback=1
 else
   case "$version" in
@@ -94,44 +91,18 @@ else
     *) tag="v$version" ;;
   esac
   install_base_url="${install_base_url%/}"
-  aws_release_url="${install_base_url}/releases/${tag}/release.json"
-  github_release_url="https://api.github.com/repos/${repo}/releases/tags/${tag}"
+  release_url="${install_base_url}/releases/${tag}/release.json"
   allow_release_fallback=0
 fi
-
-release_source="aws"
-release_url="$aws_release_url"
 
 case "$os" in
   macos) ext="zip" ;;
   linux) ext="tar.gz" ;;
 esac
 
-fetch_release_json() {
-  case "$release_source" in
-    github) curl -fsSL -H "Accept: application/vnd.github+json" "$release_url" ;;
-    *) curl -fsSL "$release_url" ;;
-  esac
-}
-
-switch_to_github_release() {
-  if [ "$release_source" = "aws" ] && [ "$github_fallback" != "0" ]; then
-    echo "$1; falling back to GitHub releases." >&2
-    release_source="github"
-    release_url="$github_release_url"
-    retry=0
-    return 0
-  fi
-
-  return 1
-}
-
 retry=0
 while :; do
-  if ! release_json="$(fetch_release_json 2>/dev/null)"; then
-    if switch_to_github_release "Could not fetch boltz-api release metadata from ${release_url}"; then
-      continue
-    fi
+  if ! release_json="$(curl -fsSL "$release_url")"; then
     echo "Could not fetch boltz-api release metadata from ${release_url}" >&2
     exit 1
   fi
@@ -164,9 +135,6 @@ while :; do
   fi
 
   if [ "$retry" -ge "$release_retries" ]; then
-    if switch_to_github_release "No boltz-api release asset found for ${os}/${arch} in ${tag} after ${release_retries} retries from ${release_source}"; then
-      continue
-    fi
     echo "No boltz-api release asset found for ${os}/${arch} in ${tag} after ${release_retries} retries" >&2
     exit 1
   fi
