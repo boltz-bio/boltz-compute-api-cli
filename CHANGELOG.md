@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0 (2026-04-29)
+
+Full Changelog: [v0.10.2...v0.11.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.10.2...v0.11.0)
+
+### Features
+
+* **compute:** support curated binder specs ([f9b999e](https://github.com/boltz-bio/boltz-compute-api-cli/commit/f9b999e0acb889e9d0c04617cec6a21b9e2425cb))
+
 ## 0.10.2 (2026-04-29)
 
 Full Changelog: [v0.10.1...v0.10.2](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.10.1...v0.10.2)
