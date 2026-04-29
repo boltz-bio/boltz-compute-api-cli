@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -77,6 +78,21 @@ func TestLoginHonorsAuthorizationOverrideAndKeepsWorkingIfBrowserOpenFails(t *te
 	require.Contains(t, output.String(), overrideURL)
 	require.Contains(t, output.String(), "Could not open browser automatically")
 	require.Equal(t, "userinfo@example.com", result.Identity.Email)
+}
+
+func TestWaitForCallbackTimeoutGivesActionableHint(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	defer listener.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Nanosecond)
+	defer cancel()
+
+	_, err = waitForCallback(ctx, listener, "expected-state")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "timed out waiting for authorization callback after 15m0s")
+	require.Contains(t, err.Error(), listener.Addr().String())
+	require.Contains(t, err.Error(), "boltz-api auth login --device-code")
 }
 
 func TestDeviceLoginPrintsCodeAndPollsTokenEndpoint(t *testing.T) {
