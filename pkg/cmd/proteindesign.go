@@ -89,7 +89,7 @@ var proteinDesignEstimateCost = cli.Command{
 	Flags: []cli.Flag{
 		&requestflag.Flag[map[string]any]{
 			Name:     "binder-specification",
-			Usage:    "Binder specification starting from an existing 3D structure. Upload a CIF/PDB file and select which chains to include, which residues to keep, and which regions to redesign. Only chains included in chain_selection are part of the engine run.",
+			Usage:    "Binder specification for protein design. Use no_template for sequence-defined binders, structure_template for uploaded binder structures, or boltz_curated for Boltz-managed nanobody and antibody defaults.",
 			Required: true,
 			BodyPath: "binder_specification",
 		},
@@ -166,7 +166,7 @@ var proteinDesignStart = cli.Command{
 	Flags: []cli.Flag{
 		&requestflag.Flag[map[string]any]{
 			Name:     "binder-specification",
-			Usage:    "Binder specification starting from an existing 3D structure. Upload a CIF/PDB file and select which chains to include, which residues to keep, and which regions to redesign. Only chains included in chain_selection are part of the engine run.",
+			Usage:    "Binder specification for protein design. Use no_template for sequence-defined binders, structure_template for uploaded binder structures, or boltz_curated for Boltz-managed nanobody and antibody defaults.",
 			Required: true,
 			BodyPath: "binder_specification",
 		},
