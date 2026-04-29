@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.1 (2026-04-29)
+
+Full Changelog: [v0.11.0...v0.11.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.11.0...v0.11.1)
+
+### Bug Fixes
+
+* **auth:** extend OAuth callback wait ([231de6e](https://github.com/boltz-bio/boltz-compute-api-cli/commit/231de6eee570b9c51843d914822b68e989c063b4))
+
 ## 0.11.0 (2026-04-29)
 
 Full Changelog: [v0.10.2...v0.11.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.10.2...v0.11.0)
