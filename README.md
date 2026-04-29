@@ -10,19 +10,19 @@ It is generated with [Stainless](https://www.stainless.com/).
 
 ### Install or update
 
-The recommended installer downloads the latest GitHub release for your
-platform. Rerun the same command to update an existing installation.
+The recommended installer downloads the latest release for your platform from
+Boltz's install CDN. Rerun the same command to update an existing installation.
 
 macOS and Linux:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | sh
+curl -fsSL https://install.boltz.bio/boltz-api/install.sh | sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+irm https://install.boltz.bio/boltz-api/install.ps1 | iex
 ```
 
 By default, the installer updates an existing `boltz-api` on `PATH`. If no
@@ -30,20 +30,19 @@ existing binary is found, it installs to `$HOME/.local/bin` on macOS/Linux and
 `%LOCALAPPDATA%\Programs\Boltz\bin` on Windows. Set `BOLTZ_API_INSTALL_DIR` to
 choose a different install directory.
 
-When a GitHub release is visible before its binary assets have finished
-uploading, the installer retries release lookup before failing. Set
+The installer uses `https://install.boltz.bio/boltz-api` for release metadata
+and binary downloads. Set `BOLTZ_API_INSTALL_BASE_URL` to use a mirror. Set
 `BOLTZ_API_RELEASE_RETRIES` or `BOLTZ_API_RELEASE_RETRY_DELAY` to override the
-default retry count and delay. For unpinned `latest` installs, it will use the
-newest release that already has a matching platform asset.
+default retry count and delay.
 
 For reproducible installs, pin a version:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.sh | BOLTZ_API_VERSION=0.10.1 sh
+curl -fsSL https://install.boltz.bio/boltz-api/install.sh | BOLTZ_API_VERSION=0.10.1 sh
 ```
 
 ```powershell
-$env:BOLTZ_API_VERSION = "0.10.1"; irm https://raw.githubusercontent.com/boltz-bio/boltz-compute-api-cli/main/scripts/install.ps1 | iex
+$env:BOLTZ_API_VERSION = "0.10.1"; irm https://install.boltz.bio/boltz-api/install.ps1 | iex
 ```
 
 ### Installing with Go

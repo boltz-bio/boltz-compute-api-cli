@@ -2,9 +2,9 @@
 
 set -eu
 
-repo="${BOLTZ_API_REPO:-boltz-bio/boltz-compute-api-cli}"
 version="${BOLTZ_API_VERSION:-latest}"
 install_dir="${BOLTZ_API_INSTALL_DIR:-}"
+install_base_url="${BOLTZ_API_INSTALL_BASE_URL:-https://install.boltz.bio/boltz-api}"
 release_retries="${BOLTZ_API_RELEASE_RETRIES:-12}"
 release_retry_delay="${BOLTZ_API_RELEASE_RETRY_DELAY:-10}"
 
@@ -81,14 +81,17 @@ case "$(uname -m)" in
 esac
 
 if [ "$version" = "latest" ]; then
-  release_url="https://api.github.com/repos/${repo}/releases?per_page=20"
+  tag=""
+  install_base_url="${install_base_url%/}"
+  release_url="${install_base_url}/latest.json"
   allow_release_fallback=1
 else
   case "$version" in
     v*) tag="$version" ;;
     *) tag="v$version" ;;
   esac
-  release_url="https://api.github.com/repos/${repo}/releases/tags/${tag}"
+  install_base_url="${install_base_url%/}"
+  release_url="${install_base_url}/releases/${tag}/release.json"
   allow_release_fallback=0
 fi
 
@@ -99,7 +102,11 @@ esac
 
 retry=0
 while :; do
-  release_json="$(curl -fsSL -H "Accept: application/vnd.github+json" "$release_url")"
+  if ! release_json="$(curl -fsSL "$release_url")"; then
+    echo "Could not fetch boltz-api release metadata from ${release_url}" >&2
+    exit 1
+  fi
+
   tag="$(printf '%s\n' "$release_json" | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)"
   latest_tag="$tag"
 
@@ -115,6 +122,9 @@ while :; do
 
   if [ -n "$asset_url" ]; then
     asset_tag="$(printf '%s\n' "$asset_url" | sed -n 's#.*/releases/download/\([^/]*\)/.*#\1#p' | head -n 1)"
+    if [ -z "$asset_tag" ]; then
+      asset_tag="$(printf '%s\n' "$asset_url" | sed -n 's#.*/releases/\([^/]*\)/.*#\1#p' | head -n 1)"
+    fi
     if [ -n "$asset_tag" ]; then
       tag="$asset_tag"
     fi
