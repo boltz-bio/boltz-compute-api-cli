@@ -75,7 +75,7 @@ var adminWorkspacesUpdate = requestflag.WithInnerFlags(cli.Command{
 			Usage:    "How long result data is retained before automatic deletion. Defaults to 7 days if not specified. Maximum retention is 14 days (336 hours).",
 			BodyPath: "data_retention",
 		},
-		&requestflag.Flag[any]{
+		&requestflag.Flag[*string]{
 			Name:     "name",
 			BodyPath: "name",
 		},
