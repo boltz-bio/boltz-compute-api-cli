@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.12.0 (2026-04-30)
+
+Full Changelog: [v0.11.1...v0.12.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.11.1...v0.12.0)
+
+### Features
+
+* add compute api retention settings ([3aebac6](https://github.com/boltz-bio/boltz-compute-api-cli/commit/3aebac6817fdcb4ada87407b7328ebdae83f3379))
+* support passing path and query params over stdin ([854d8fb](https://github.com/boltz-bio/boltz-compute-api-cli/commit/854d8fb817e323ab1db2555bd87633b4cb506087))
+
+
+### Bug Fixes
+
+* **cli:** correctly load zsh autocompletion ([0970eb1](https://github.com/boltz-bio/boltz-compute-api-cli/commit/0970eb129385fdadb815b330ea78f2b92afc9bf4))
+* flags for nullable body scalar fields are strictly typed ([067ef4d](https://github.com/boltz-bio/boltz-compute-api-cli/commit/067ef4da59dcafbda2944d6acb69298e8c408cde))
+
 ## 0.11.1 (2026-04-29)
 
 Full Changelog: [v0.11.0...v0.11.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.11.0...v0.11.1)
