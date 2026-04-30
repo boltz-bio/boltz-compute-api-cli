@@ -20,8 +20,9 @@ var smallMoleculeDesignRetrieve = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 		&requestflag.Flag[string]{
 			Name:      "workspace-id",
@@ -74,8 +75,9 @@ var smallMoleculeDesignDeleteData = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 	},
 	Action:          handleSmallMoleculeDesignDeleteData,
@@ -171,8 +173,9 @@ var smallMoleculeDesignListResults = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 		&requestflag.Flag[string]{
 			Name:      "after-id",
@@ -293,8 +296,9 @@ var smallMoleculeDesignStop = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 	},
 	Action:          handleSmallMoleculeDesignStop,
@@ -312,8 +316,6 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeDesignGetParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -324,6 +326,8 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeDesignGetParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -358,8 +362,6 @@ func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error 
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeDesignListParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -370,6 +372,8 @@ func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error 
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeDesignListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -455,8 +459,6 @@ func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeDesignEstimateCostParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -467,6 +469,8 @@ func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeDesignEstimateCostParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -499,8 +503,6 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeDesignListResultsParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -511,6 +513,8 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeDesignListResultsParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -564,8 +568,6 @@ func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeDesignStartParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -576,6 +578,8 @@ func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeDesignStartParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))

@@ -20,8 +20,9 @@ var predictionsStructureAndBindingRetrieve = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 		&requestflag.Flag[string]{
 			Name:      "workspace-id",
@@ -74,8 +75,9 @@ var predictionsStructureAndBindingDeleteData = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 	},
 	Action:          handlePredictionsStructureAndBindingDeleteData,
@@ -219,8 +221,6 @@ func handlePredictionsStructureAndBindingRetrieve(ctx context.Context, cmd *cli.
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.PredictionStructureAndBindingGetParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -231,6 +231,8 @@ func handlePredictionsStructureAndBindingRetrieve(ctx context.Context, cmd *cli.
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.PredictionStructureAndBindingGetParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -265,8 +267,6 @@ func handlePredictionsStructureAndBindingList(ctx context.Context, cmd *cli.Comm
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.PredictionStructureAndBindingListParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -277,6 +277,8 @@ func handlePredictionsStructureAndBindingList(ctx context.Context, cmd *cli.Comm
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.PredictionStructureAndBindingListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -362,8 +364,6 @@ func handlePredictionsStructureAndBindingEstimateCost(ctx context.Context, cmd *
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.PredictionStructureAndBindingEstimateCostParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -374,6 +374,8 @@ func handlePredictionsStructureAndBindingEstimateCost(ctx context.Context, cmd *
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.PredictionStructureAndBindingEstimateCostParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -403,8 +405,6 @@ func handlePredictionsStructureAndBindingStart(ctx context.Context, cmd *cli.Com
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.PredictionStructureAndBindingStartParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -415,6 +415,8 @@ func handlePredictionsStructureAndBindingStart(ctx context.Context, cmd *cli.Com
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.PredictionStructureAndBindingStartParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
