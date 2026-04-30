@@ -155,7 +155,7 @@ func handleAdminWorkspacesCreate(ctx context.Context, cmd *cli.Command) error {
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		ApplicationJSON,
 		false,
 	)
@@ -199,7 +199,7 @@ func handleAdminWorkspacesRetrieve(ctx context.Context, cmd *cli.Command) error 
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -241,7 +241,7 @@ func handleAdminWorkspacesUpdate(ctx context.Context, cmd *cli.Command) error {
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		ApplicationJSON,
 		false,
 	)
@@ -287,7 +287,7 @@ func handleAdminWorkspacesList(ctx context.Context, cmd *cli.Command) error {
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -345,7 +345,7 @@ func handleAdminWorkspacesArchive(ctx context.Context, cmd *cli.Command) error {
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)

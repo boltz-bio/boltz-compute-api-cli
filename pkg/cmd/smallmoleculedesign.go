@@ -319,7 +319,7 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -365,7 +365,7 @@ func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error 
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -423,7 +423,7 @@ func handleSmallMoleculeDesignDeleteData(ctx context.Context, cmd *cli.Command) 
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -462,7 +462,7 @@ func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		ApplicationJSON,
 		false,
 	)
@@ -506,7 +506,7 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -571,7 +571,7 @@ func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		ApplicationJSON,
 		false,
 	)
@@ -615,7 +615,7 @@ func handleSmallMoleculeDesignStop(ctx context.Context, cmd *cli.Command) error 
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)

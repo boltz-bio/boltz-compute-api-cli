@@ -243,7 +243,7 @@ func handleProteinLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) e
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -289,7 +289,7 @@ func handleProteinLibraryScreenList(ctx context.Context, cmd *cli.Command) error
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -347,7 +347,7 @@ func handleProteinLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command)
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -386,7 +386,7 @@ func handleProteinLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Comman
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		ApplicationJSON,
 		false,
 	)
@@ -430,7 +430,7 @@ func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
@@ -495,7 +495,7 @@ func handleProteinLibraryScreenStart(ctx context.Context, cmd *cli.Command) erro
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		ApplicationJSON,
 		false,
 	)
@@ -539,7 +539,7 @@ func handleProteinLibraryScreenStop(ctx context.Context, cmd *cli.Command) error
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
-		apiquery.ArrayQueryFormatComma,
+		apiquery.ArrayQueryFormatRepeat,
 		EmptyBody,
 		false,
 	)
