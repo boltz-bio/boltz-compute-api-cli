@@ -53,8 +53,9 @@ var adminWorkspacesRetrieve = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "workspace-id",
-			Required: true,
+			Name:      "workspace-id",
+			Required:  true,
+			PathParam: "workspace_id",
 		},
 	},
 	Action:          handleAdminWorkspacesRetrieve,
@@ -67,8 +68,9 @@ var adminWorkspacesUpdate = requestflag.WithInnerFlags(cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "workspace-id",
-			Required: true,
+			Name:      "workspace-id",
+			Required:  true,
+			PathParam: "workspace_id",
 		},
 		&requestflag.Flag[map[string]any]{
 			Name:     "data-retention",
@@ -133,8 +135,9 @@ var adminWorkspacesArchive = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "workspace-id",
-			Required: true,
+			Name:      "workspace-id",
+			Required:  true,
+			PathParam: "workspace_id",
 		},
 	},
 	Action:          handleAdminWorkspacesArchive,
@@ -149,8 +152,6 @@ func handleAdminWorkspacesCreate(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.AdminWorkspaceNewParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -161,6 +162,8 @@ func handleAdminWorkspacesCreate(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.AdminWorkspaceNewParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -235,8 +238,6 @@ func handleAdminWorkspacesUpdate(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.AdminWorkspaceUpdateParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -247,6 +248,8 @@ func handleAdminWorkspacesUpdate(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.AdminWorkspaceUpdateParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -281,8 +284,6 @@ func handleAdminWorkspacesList(ctx context.Context, cmd *cli.Command) error {
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.AdminWorkspaceListParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -293,6 +294,8 @@ func handleAdminWorkspacesList(ctx context.Context, cmd *cli.Command) error {
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.AdminWorkspaceListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")

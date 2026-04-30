@@ -20,8 +20,9 @@ var smallMoleculeLibraryScreenRetrieve = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 		&requestflag.Flag[string]{
 			Name:      "workspace-id",
@@ -74,8 +75,9 @@ var smallMoleculeLibraryScreenDeleteData = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 	},
 	Action:          handleSmallMoleculeLibraryScreenDeleteData,
@@ -177,8 +179,9 @@ var smallMoleculeLibraryScreenListResults = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 		&requestflag.Flag[string]{
 			Name:      "after-id",
@@ -305,8 +308,9 @@ var smallMoleculeLibraryScreenStop = cli.Command{
 	Suggest: true,
 	Flags: []cli.Flag{
 		&requestflag.Flag[string]{
-			Name:     "id",
-			Required: true,
+			Name:      "id",
+			Required:  true,
+			PathParam: "id",
 		},
 	},
 	Action:          handleSmallMoleculeLibraryScreenStop,
@@ -324,8 +328,6 @@ func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Comm
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenGetParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -336,6 +338,8 @@ func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Comm
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeLibraryScreenGetParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -370,8 +374,6 @@ func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command)
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenListParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -382,6 +384,8 @@ func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command)
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeLibraryScreenListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -467,8 +471,6 @@ func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenEstimateCostParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -479,6 +481,8 @@ func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeLibraryScreenEstimateCostParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -511,8 +515,6 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenListResultsParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -523,6 +525,8 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeLibraryScreenListResultsParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -576,8 +580,6 @@ func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command
 		return fmt.Errorf("Unexpected extra arguments: %v", unusedArgs)
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenStartParams{}
-
 	options, err := flagOptions(
 		cmd,
 		apiquery.NestedQueryFormatBrackets,
@@ -588,6 +590,8 @@ func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command
 	if err != nil {
 		return err
 	}
+
+	params := boltzcompute.SmallMoleculeLibraryScreenStartParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
