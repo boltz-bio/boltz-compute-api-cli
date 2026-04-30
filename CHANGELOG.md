@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0 (2026-04-30)
+
+Full Changelog: [v0.13.0...v0.14.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.13.0...v0.14.0)
+
+### Features
+
+* **compute:** gate console backend by compute roles ([c9abf9e](https://github.com/boltz-bio/boltz-compute-api-cli/commit/c9abf9e2d9b0268bfb3a0a0873d2f7ba636f6459))
+
 ## 0.13.0 (2026-04-30)
 
 Full Changelog: [v0.12.0...v0.13.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.12.0...v0.13.0)
