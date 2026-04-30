@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.13.0 (2026-04-30)
+
+Full Changelog: [v0.12.0...v0.13.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.12.0...v0.13.0)
+
+### Features
+
+* support passing path and query params over stdin ([50e8956](https://github.com/boltz-bio/boltz-compute-api-cli/commit/50e895648cdbad77f2b62ea9b7af837bdcdf2d34))
+
+
+### Bug Fixes
+
+* **sdk:** serialize usage arrays as repeated params ([80d9e48](https://github.com/boltz-bio/boltz-compute-api-cli/commit/80d9e48824ad14af63d908a64421a195af8e3543))
+
 ## 0.12.0 (2026-04-30)
 
 Full Changelog: [v0.11.1...v0.12.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.11.1...v0.12.0)
