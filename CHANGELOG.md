@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0 (2026-05-01)
+
+Full Changelog: [v0.14.1...v0.15.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.14.1...v0.15.0)
+
+### Features
+
+* **compute:** add console usage page ([39373b7](https://github.com/boltz-bio/boltz-compute-api-cli/commit/39373b7da1dcb87309bee09b54193204729b0fbc))
+
 ## 0.14.1 (2026-05-01)
 
 Full Changelog: [v0.14.0...v0.14.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.14.0...v0.14.1)
