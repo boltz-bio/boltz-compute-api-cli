@@ -85,22 +85,6 @@ func init() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:     "cli",
-				Category: "API RESOURCE",
-				Suggest:  true,
-				Commands: []*cli.Command{
-					&cliVersion,
-				},
-			},
-			{
-				Name:     "auth",
-				Category: "API RESOURCE",
-				Suggest:  true,
-				Commands: []*cli.Command{
-					&authMe,
-				},
-			},
-			{
 				Name:     "predictions:structure-and-binding",
 				Category: "API RESOURCE",
 				Suggest:  true,
@@ -196,6 +180,22 @@ func init() {
 				Suggest:  true,
 				Commands: []*cli.Command{
 					&adminUsageList,
+				},
+			},
+			{
+				Name:     "cli",
+				Category: "API RESOURCE",
+				Suggest:  true,
+				Commands: []*cli.Command{
+					&cliVersion,
+				},
+			},
+			{
+				Name:     "auth",
+				Category: "API RESOURCE",
+				Suggest:  true,
+				Commands: []*cli.Command{
+					&authMe,
 				},
 			},
 			{
