@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.1 (2026-05-01)
+
+Full Changelog: [v0.15.0...v0.15.1](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.15.0...v0.15.1)
+
+### Bug Fixes
+
+* **compute-api:** polish reference docs for CLI and auth ([9c5063c](https://github.com/boltz-bio/boltz-compute-api-cli/commit/9c5063cb1f9f70da04957ad57be7ed3a7739150c))
+
 ## 0.15.0 (2026-05-01)
 
 Full Changelog: [v0.14.1...v0.15.0](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.14.1...v0.15.0)
