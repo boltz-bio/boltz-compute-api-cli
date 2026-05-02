@@ -50,7 +50,7 @@ $env:BOLTZ_API_VERSION = "0.15.2"; irm https://install.boltz.bio/boltz-api/insta
 To build from source, you need [Go](https://go.dev/doc/install) version 1.25 or later installed.
 
 ```sh
-go install 'github.com/boltz-bio/boltz-compute-api-cli/cmd/boltz-api@latest'
+go install 'github.com/boltz-bio/boltz-api-cli/cmd/boltz-api@latest'
 ```
 
 Once you have run `go install`, the binary is placed in your Go bin directory:

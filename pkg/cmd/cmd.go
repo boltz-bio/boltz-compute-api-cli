@@ -12,8 +12,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/autocomplete"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-cli/internal/autocomplete"
+	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
 	docs "github.com/urfave/cli-docs/v3"
 	"github.com/urfave/cli/v3"
 )
