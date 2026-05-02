@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.15.3 (2026-05-02)
+
+Full Changelog: [v0.15.2...v0.15.3](https://github.com/boltz-bio/boltz-api-cli/compare/v0.15.2...v0.15.3)
+
+### Bug Fixes
+
+* stainless changes ([85b5173](https://github.com/boltz-bio/boltz-api-cli/commit/85b5173bb90b0ad349ad3916fdf34de464a207d1))
+
+
+### Chores
+
+* update SDK settings ([c1f1e14](https://github.com/boltz-bio/boltz-api-cli/commit/c1f1e14ee63d73a7a87011061a9da3697bd0c92c))
+* update SDK settings ([c887119](https://github.com/boltz-bio/boltz-api-cli/commit/c88711923fe0eb3959861c6255cfe5f84b3c677e))
+* update SDK settings ([84a5c4e](https://github.com/boltz-bio/boltz-api-cli/commit/84a5c4e373fa19963567d25a9d57939a37ece32e))
+
 ## 0.15.2 (2026-05-02)
 
 Full Changelog: [v0.15.1...v0.15.2](https://github.com/boltz-bio/boltz-compute-api-cli/compare/v0.15.1...v0.15.2)
