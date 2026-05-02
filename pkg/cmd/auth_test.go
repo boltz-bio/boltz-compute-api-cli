@@ -5,7 +5,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/mocktest"
+	"github.com/boltz-bio/boltz-api-cli/internal/mocktest"
 )
 
 func TestAuthMe(t *testing.T) {
