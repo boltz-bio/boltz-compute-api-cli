@@ -5,12 +5,12 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Mark the necessary Go modules as private to avoid Go's proxy
-export GOPRIVATE="${GOPRIVATE:+$GOPRIVATE,}github.com/boltz-bio/boltz-compute-api-go,github.com/stainless-sdks/boltz-compute-api-go"
+export GOPRIVATE="${GOPRIVATE:+$GOPRIVATE,}github.com/boltz-bio/boltz-api-go,github.com/stainless-sdks/boltz-compute-api-go"
 
 REPLACEMENT="${1:-"../boltz-compute-go"}"
 echo "==> Replacing Go SDK with $REPLACEMENT"
 if [[ -d "$REPLACEMENT" ]] || go list -m "$REPLACEMENT" >/dev/null; then
-    go mod edit -replace github.com/boltz-bio/boltz-compute-api-go="$REPLACEMENT"
+    go mod edit -replace github.com/boltz-bio/boltz-api-go="$REPLACEMENT"
     go mod tidy -e
 else
     echo "Skipping Go SDK replacement (branch may not exist on Go SDK)"

@@ -16,11 +16,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/apiform"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/debugmiddleware"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
-	"github.com/boltz-bio/boltz-compute-api-go/option"
 
 	"github.com/goccy/go-yaml"
 	"github.com/urfave/cli/v3"

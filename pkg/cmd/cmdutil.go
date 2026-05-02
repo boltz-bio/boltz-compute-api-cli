@@ -16,8 +16,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/jsonview"
-	"github.com/boltz-bio/boltz-compute-api-go/option"
 
 	"github.com/charmbracelet/x/term"
 	"github.com/itchyny/json2yaml"
