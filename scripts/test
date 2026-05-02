@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # Mark the necessary Go modules as private to avoid Go's proxy
-export GOPRIVATE="${GOPRIVATE:+$GOPRIVATE,}github.com/boltz-bio/boltz-compute-api-go,github.com/stainless-sdks/boltz-compute-api-go"
+export GOPRIVATE="${GOPRIVATE:+$GOPRIVATE,}github.com/boltz-bio/boltz-api-go,github.com/stainless-sdks/boltz-compute-api-go"
 
 
 

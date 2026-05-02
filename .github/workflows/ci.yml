@@ -15,7 +15,7 @@ on:
       - 'stl-preview-base/**'
 
 env:
-  GOPRIVATE: github.com/boltz-bio/boltz-compute-api-go,github.com/stainless-sdks/boltz-compute-api-go
+  GOPRIVATE: github.com/boltz-bio/boltz-api-go,github.com/stainless-sdks/boltz-compute-api-go
 
 jobs:
   lint:

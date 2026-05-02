@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
+	githubcomboltzbioboltzcomputeapigo "github.com/boltz-bio/boltz-api-go"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
-	githubcomboltzbioboltzcomputeapigo "github.com/boltz-bio/boltz-compute-api-go"
-	"github.com/boltz-bio/boltz-compute-api-go/option"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v3"
 )
