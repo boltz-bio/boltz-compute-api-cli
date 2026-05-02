@@ -5,11 +5,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/boltz-bio/boltz-api-go"
 
-	boltzcompute "github.com/boltz-bio/boltz-api-go"
-	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -73,7 +73,7 @@ var adminUsageList = cli.Command{
 }
 
 func handleAdminUsageList(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -91,7 +91,7 @@ func handleAdminUsageList(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.AdminUsageListParams{}
+	params := boltzapi.AdminUsageListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")

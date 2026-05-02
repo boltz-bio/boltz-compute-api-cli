@@ -1,6 +1,6 @@
-# Boltz Compute CLI
+# Boltz CLI
 
-The official CLI for the [Boltz Compute REST API](https://docs.boltz.bio/compute).
+The official CLI for the [Boltz REST API](https://api.boltz.bio/docs).
 
 It is generated with [Stainless](https://www.stainless.com/).
 
@@ -110,9 +110,9 @@ For details about specific commands, use the `--help` flag.
 
 ### Environment variables
 
-| Environment variable    | Required | Default value |
-| ----------------------- | -------- | ------------- |
-| `BOLTZ_COMPUTE_API_KEY` | no       | `null`        |
+| Environment variable | Required | Default value |
+| -------------------- | -------- | ------------- |
+| `BOLTZ_API_KEY`      | no       | `null`        |
 
 OAuth mode can also be configured with:
 
@@ -129,7 +129,7 @@ OAuth mode can also be configured with:
 
 ### Global flags
 
-- `--api-key` (can also be set with `BOLTZ_COMPUTE_API_KEY` env var)
+- `--api-key` (can also be set with `BOLTZ_API_KEY` env var)
 - `--help` - Show command line usage
 - `--debug` - Enable debug logging (includes HTTP request/response details)
 - `--version`, `-v` - Show the CLI version
@@ -411,7 +411,7 @@ per-item mode.
 
 ## Linking different Go SDK versions
 
-You can link the CLI against a different version of the Boltz Compute Go SDK
+You can link the CLI against a different version of the Boltz Go SDK
 for development purposes using the `./scripts/link` script.
 
 To link to a specific version from a repository (version can be a branch,
@@ -424,7 +424,7 @@ git tag, or commit hash):
 To link to a local copy of the SDK:
 
 ```bash
-./scripts/link ../path/to/boltzcompute-go
+./scripts/link ../path/to/boltzapi-go
 ```
 
-If you run the link script without any arguments, it will default to `../boltzcompute-go`.
+If you run the link script without any arguments, it will default to `../boltzapi-go`.

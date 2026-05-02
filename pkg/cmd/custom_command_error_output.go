@@ -4,12 +4,12 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/boltz-bio/boltz-api-go"
 	"io"
 	"net/http"
 	"os"
 
-	boltzcompute "github.com/boltz-bio/boltz-api-go"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/autherror"
+	"github.com/boltz-bio/boltz-api-cli/internal/autherror"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -30,7 +30,7 @@ func WriteCommandErrorOutput(app *cli.Command, err error, stdout *os.File, stder
 }
 
 func writeStructuredCommandError(app *cli.Command, err error, stdout *os.File, stderr io.Writer) bool {
-	var apierr *boltzcompute.Error
+	var apierr *boltzapi.Error
 	if errors.As(err, &apierr) {
 		fmt.Fprintf(stderr, "%s %q: %d %s\n", apierr.Request.Method, apierr.Request.URL, apierr.Response.StatusCode, http.StatusText(apierr.Response.StatusCode))
 		return showStructuredCommandError(app, apierr.RawJSON(), err, stdout, stderr)

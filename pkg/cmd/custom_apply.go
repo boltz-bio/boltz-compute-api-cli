@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-cli/internal/authconfig"
+	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
 	"github.com/urfave/cli/v3"
 )
 

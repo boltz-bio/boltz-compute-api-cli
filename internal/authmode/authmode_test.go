@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/autherror"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
+	"github.com/boltz-bio/boltz-api-cli/internal/authconfig"
+	"github.com/boltz-bio/boltz-api-cli/internal/autherror"
+	"github.com/boltz-bio/boltz-api-cli/internal/authstore"
 	"github.com/stretchr/testify/require"
 	"github.com/zalando/go-keyring"
 )

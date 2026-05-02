@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v3"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/autherror"
+	"github.com/boltz-bio/boltz-api-cli/internal/autherror"
 )
 
 func TestWriteCommandErrorOutputFormatsAuthErrors(t *testing.T) {

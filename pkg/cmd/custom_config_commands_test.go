@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
+	"github.com/boltz-bio/boltz-api-cli/internal/authconfig"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v3"
 )

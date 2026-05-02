@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/boltz-bio/boltz-api-go"
 	"io"
 	"net/http"
 	neturl "net/url"
@@ -22,7 +23,6 @@ import (
 	"strings"
 	"time"
 
-	boltzcompute "github.com/boltz-bio/boltz-api-go"
 	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-api-go/packages/pagination"
 	"github.com/boltz-bio/boltz-api-go/packages/param"
@@ -185,7 +185,7 @@ type downloadStatusResponse struct {
 }
 
 type downloadResultsEngine struct {
-	client *boltzcompute.Client
+	client *boltzapi.Client
 	sink   *downloadResultsSink
 }
 
@@ -229,14 +229,14 @@ type downloadPipelinePage struct {
 }
 
 type downloadPipelineAdapter struct {
-	get         func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error)
-	listResults func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error)
+	get         func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error)
+	listResults func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error)
 }
 
 var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 	downloadRunTypeProteinDesign: {
-		get: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error) {
-			params := boltzcompute.ProteinDesignGetParams{}
+		get: func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error) {
+			params := boltzapi.ProteinDesignGetParams{}
 			setOptionalStringOpt(&params.WorkspaceID, workspaceID)
 			response, err := client.Protein.Design.Get(ctx, runID, params)
 			if err != nil {
@@ -254,22 +254,22 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 				response.RawJSON(),
 			), nil
 		},
-		listResults: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
-			params := boltzcompute.ProteinDesignListResultsParams{Limit: param.NewOpt(int64(downloadResultsPageLimit))}
+		listResults: func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
+			params := boltzapi.ProteinDesignListResultsParams{Limit: param.NewOpt(int64(downloadResultsPageLimit))}
 			setOptionalStringOpt(&params.WorkspaceID, workspaceID)
 			setOptionalStringOpt(&params.AfterID, afterID)
 			response, err := client.Protein.Design.ListResults(ctx, runID, params)
 			if err != nil {
 				return downloadPipelinePage{}, err
 			}
-			return normalizePipelinePage(response, func(result boltzcompute.ProteinDesignListResultsResponse) downloadPipelineResultInfo {
+			return normalizePipelinePage(response, func(result boltzapi.ProteinDesignListResultsResponse) downloadPipelineResultInfo {
 				return newDownloadPipelineResultInfo(result.ID, result.Artifacts.Archive.URL, result.RawJSON())
 			}), nil
 		},
 	},
 	downloadRunTypeProteinLibraryScreen: {
-		get: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error) {
-			params := boltzcompute.ProteinLibraryScreenGetParams{}
+		get: func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error) {
+			params := boltzapi.ProteinLibraryScreenGetParams{}
 			setOptionalStringOpt(&params.WorkspaceID, workspaceID)
 			response, err := client.Protein.LibraryScreen.Get(ctx, runID, params)
 			if err != nil {
@@ -287,22 +287,22 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 				response.RawJSON(),
 			), nil
 		},
-		listResults: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
-			params := boltzcompute.ProteinLibraryScreenListResultsParams{Limit: param.NewOpt(int64(downloadResultsPageLimit))}
+		listResults: func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
+			params := boltzapi.ProteinLibraryScreenListResultsParams{Limit: param.NewOpt(int64(downloadResultsPageLimit))}
 			setOptionalStringOpt(&params.WorkspaceID, workspaceID)
 			setOptionalStringOpt(&params.AfterID, afterID)
 			response, err := client.Protein.LibraryScreen.ListResults(ctx, runID, params)
 			if err != nil {
 				return downloadPipelinePage{}, err
 			}
-			return normalizePipelinePage(response, func(result boltzcompute.ProteinLibraryScreenListResultsResponse) downloadPipelineResultInfo {
+			return normalizePipelinePage(response, func(result boltzapi.ProteinLibraryScreenListResultsResponse) downloadPipelineResultInfo {
 				return newDownloadPipelineResultInfo(result.ID, result.Artifacts.Archive.URL, result.RawJSON())
 			}), nil
 		},
 	},
 	downloadRunTypeSmallMoleculeDesign: {
-		get: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error) {
-			params := boltzcompute.SmallMoleculeDesignGetParams{}
+		get: func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error) {
+			params := boltzapi.SmallMoleculeDesignGetParams{}
 			setOptionalStringOpt(&params.WorkspaceID, workspaceID)
 			response, err := client.SmallMolecule.Design.Get(ctx, runID, params)
 			if err != nil {
@@ -320,22 +320,22 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 				response.RawJSON(),
 			), nil
 		},
-		listResults: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
-			params := boltzcompute.SmallMoleculeDesignListResultsParams{Limit: param.NewOpt(int64(downloadResultsPageLimit))}
+		listResults: func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
+			params := boltzapi.SmallMoleculeDesignListResultsParams{Limit: param.NewOpt(int64(downloadResultsPageLimit))}
 			setOptionalStringOpt(&params.WorkspaceID, workspaceID)
 			setOptionalStringOpt(&params.AfterID, afterID)
 			response, err := client.SmallMolecule.Design.ListResults(ctx, runID, params)
 			if err != nil {
 				return downloadPipelinePage{}, err
 			}
-			return normalizePipelinePage(response, func(result boltzcompute.SmallMoleculeDesignListResultsResponse) downloadPipelineResultInfo {
+			return normalizePipelinePage(response, func(result boltzapi.SmallMoleculeDesignListResultsResponse) downloadPipelineResultInfo {
 				return newDownloadPipelineResultInfo(result.ID, result.Artifacts.Archive.URL, result.RawJSON())
 			}), nil
 		},
 	},
 	downloadRunTypeSmallMoleculeScreen: {
-		get: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error) {
-			params := boltzcompute.SmallMoleculeLibraryScreenGetParams{}
+		get: func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string) (downloadPipelineRunInfo, error) {
+			params := boltzapi.SmallMoleculeLibraryScreenGetParams{}
 			setOptionalStringOpt(&params.WorkspaceID, workspaceID)
 			response, err := client.SmallMolecule.LibraryScreen.Get(ctx, runID, params)
 			if err != nil {
@@ -353,15 +353,15 @@ var downloadPipelineAdapters = map[downloadRunType]downloadPipelineAdapter{
 				response.RawJSON(),
 			), nil
 		},
-		listResults: func(ctx context.Context, client *boltzcompute.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
-			params := boltzcompute.SmallMoleculeLibraryScreenListResultsParams{Limit: param.NewOpt(int64(downloadResultsPageLimit))}
+		listResults: func(ctx context.Context, client *boltzapi.Client, runID string, workspaceID *string, afterID *string) (downloadPipelinePage, error) {
+			params := boltzapi.SmallMoleculeLibraryScreenListResultsParams{Limit: param.NewOpt(int64(downloadResultsPageLimit))}
 			setOptionalStringOpt(&params.WorkspaceID, workspaceID)
 			setOptionalStringOpt(&params.AfterID, afterID)
 			response, err := client.SmallMolecule.LibraryScreen.ListResults(ctx, runID, params)
 			if err != nil {
 				return downloadPipelinePage{}, err
 			}
-			return normalizePipelinePage(response, func(result boltzcompute.SmallMoleculeLibraryScreenListResultsResponse) downloadPipelineResultInfo {
+			return normalizePipelinePage(response, func(result boltzapi.SmallMoleculeLibraryScreenListResultsResponse) downloadPipelineResultInfo {
 				return newDownloadPipelineResultInfo(result.ID, result.Artifacts.Archive.URL, result.RawJSON())
 			}), nil
 		},
@@ -374,7 +374,7 @@ func handleDownloadResults(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	engine := downloadResultsEngine{
 		client: &client,
 		sink: &downloadResultsSink{
@@ -1731,7 +1731,7 @@ func mergeDownloadEventDetails(base map[string]any, extra map[string]any) map[st
 }
 
 func (e *downloadResultsEngine) getPrediction(ctx context.Context, runID string, workspaceID *string) (downloadPredictionRunInfo, error) {
-	params := boltzcompute.PredictionStructureAndBindingGetParams{}
+	params := boltzapi.PredictionStructureAndBindingGetParams{}
 	setOptionalStringOpt(&params.WorkspaceID, workspaceID)
 	response, err := e.client.Predictions.StructureAndBinding.Get(ctx, runID, params)
 	if err != nil {

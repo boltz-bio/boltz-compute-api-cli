@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
+	"github.com/boltz-bio/boltz-api-cli/internal/authstore"
 	"github.com/urfave/cli/v3"
 	"gopkg.in/yaml.v3"
 )

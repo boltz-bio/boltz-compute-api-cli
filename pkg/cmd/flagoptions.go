@@ -20,8 +20,8 @@ import (
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/debugmiddleware"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-cli/internal/structuredinclude"
 	"github.com/boltz-bio/boltz-api-go/option"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/structuredinclude"
 
 	"github.com/goccy/go-yaml"
 	"github.com/urfave/cli/v3"

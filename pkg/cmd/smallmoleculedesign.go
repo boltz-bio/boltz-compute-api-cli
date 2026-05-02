@@ -5,11 +5,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/boltz-bio/boltz-api-go"
 
-	boltzcompute "github.com/boltz-bio/boltz-api-go"
-	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -306,7 +306,7 @@ var smallMoleculeDesignStop = cli.Command{
 }
 
 func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -327,7 +327,7 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeDesignGetParams{}
+	params := boltzapi.SmallMoleculeDesignGetParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -355,7 +355,7 @@ func handleSmallMoleculeDesignRetrieve(ctx context.Context, cmd *cli.Command) er
 }
 
 func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -373,7 +373,7 @@ func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error 
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeDesignListParams{}
+	params := boltzapi.SmallMoleculeDesignListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -410,7 +410,7 @@ func handleSmallMoleculeDesignList(ctx context.Context, cmd *cli.Command) error 
 }
 
 func handleSmallMoleculeDesignDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -452,7 +452,7 @@ func handleSmallMoleculeDesignDeleteData(ctx context.Context, cmd *cli.Command) 
 }
 
 func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -470,7 +470,7 @@ func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeDesignEstimateCostParams{}
+	params := boltzapi.SmallMoleculeDesignEstimateCostParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -493,7 +493,7 @@ func handleSmallMoleculeDesignEstimateCost(ctx context.Context, cmd *cli.Command
 }
 
 func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -514,7 +514,7 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeDesignListResultsParams{}
+	params := boltzapi.SmallMoleculeDesignListResultsParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -561,7 +561,7 @@ func handleSmallMoleculeDesignListResults(ctx context.Context, cmd *cli.Command)
 }
 
 func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -579,7 +579,7 @@ func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeDesignStartParams{}
+	params := boltzapi.SmallMoleculeDesignStartParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -602,7 +602,7 @@ func handleSmallMoleculeDesignStart(ctx context.Context, cmd *cli.Command) error
 }
 
 func handleSmallMoleculeDesignStop(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
