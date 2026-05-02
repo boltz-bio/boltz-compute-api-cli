@@ -1,4 +1,4 @@
 configured_endpoints: 44
-openapi_spec_url: https://storage.googleapis.com/stainless-sdk-openapi-specs/boltz-pbc/boltz-compute-api-713a201dcb7c278a5499d585ac384bd768b431ca33b7ffcfe8d2d946da606c84.yml
+openapi_spec_url: https://storage.googleapis.com/stainless-sdk-openapi-specs/boltz-pbc/boltz-compute-api-85a872bc4269b18faf19737cf1090271a469a90e550a997c2f96e4904243fb44.yml
 openapi_spec_hash: 942626270c4062a989947b50abbec3e1
-config_hash: b6c429ed9bcb9e1481c4d579be8da765
+config_hash: 6d4e63978409a5b7c23e76fa4b4db2cd
