@@ -6,9 +6,9 @@ import (
 	"context"
 	"fmt"
 
+	boltzcompute "github.com/boltz-bio/boltz-api-go"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/apiquery"
-	"github.com/boltz-bio/boltz-compute-api-go"
-	"github.com/boltz-bio/boltz-compute-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )

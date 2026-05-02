@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"os"
 
+	boltzcompute "github.com/boltz-bio/boltz-api-go"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/autherror"
-	boltzcompute "github.com/boltz-bio/boltz-compute-api-go"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )

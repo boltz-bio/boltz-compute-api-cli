@@ -22,10 +22,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/boltz-bio/boltz-compute-api-go"
-	"github.com/boltz-bio/boltz-compute-api-go/option"
-	"github.com/boltz-bio/boltz-compute-api-go/packages/pagination"
-	"github.com/boltz-bio/boltz-compute-api-go/packages/param"
+	boltzcompute "github.com/boltz-bio/boltz-api-go"
+	"github.com/boltz-bio/boltz-api-go/option"
+	"github.com/boltz-bio/boltz-api-go/packages/pagination"
+	"github.com/boltz-bio/boltz-api-go/packages/param"
 	"github.com/urfave/cli/v3"
 )
 

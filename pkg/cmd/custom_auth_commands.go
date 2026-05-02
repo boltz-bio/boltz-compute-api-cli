@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
+	computeapi "github.com/boltz-bio/boltz-api-go"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/autherror"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authmode"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
 	"github.com/boltz-bio/boltz-compute-api-cli/internal/oauthclient"
-	computeapi "github.com/boltz-bio/boltz-compute-api-go"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
