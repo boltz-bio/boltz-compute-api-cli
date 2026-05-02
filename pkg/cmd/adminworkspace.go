@@ -8,8 +8,8 @@ import (
 
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
-	"github.com/boltz-bio/boltz-compute-api-go"
-	"github.com/boltz-bio/boltz-compute-api-go/option"
+	"github.com/boltz-bio/boltz-api-go"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -145,7 +145,7 @@ var adminWorkspacesArchive = cli.Command{
 }
 
 func handleAdminWorkspacesCreate(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -163,7 +163,7 @@ func handleAdminWorkspacesCreate(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.AdminWorkspaceNewParams{}
+	params := boltzapi.AdminWorkspaceNewParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -186,7 +186,7 @@ func handleAdminWorkspacesCreate(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminWorkspacesRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("workspace-id") && len(unusedArgs) > 0 {
 		cmd.Set("workspace-id", unusedArgs[0])
@@ -228,7 +228,7 @@ func handleAdminWorkspacesRetrieve(ctx context.Context, cmd *cli.Command) error 
 }
 
 func handleAdminWorkspacesUpdate(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("workspace-id") && len(unusedArgs) > 0 {
 		cmd.Set("workspace-id", unusedArgs[0])
@@ -249,7 +249,7 @@ func handleAdminWorkspacesUpdate(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.AdminWorkspaceUpdateParams{}
+	params := boltzapi.AdminWorkspaceUpdateParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -277,7 +277,7 @@ func handleAdminWorkspacesUpdate(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminWorkspacesList(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -295,7 +295,7 @@ func handleAdminWorkspacesList(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.AdminWorkspaceListParams{}
+	params := boltzapi.AdminWorkspaceListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -332,7 +332,7 @@ func handleAdminWorkspacesList(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminWorkspacesArchive(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("workspace-id") && len(unusedArgs) > 0 {
 		cmd.Set("workspace-id", unusedArgs[0])

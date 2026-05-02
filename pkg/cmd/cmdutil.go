@@ -40,7 +40,7 @@ func ValidateBaseURL(value, source string) error {
 
 func getDefaultRequestOptions(cmd *cli.Command) []option.RequestOption {
 	opts := []option.RequestOption{
-		option.WithHeader("User-Agent", fmt.Sprintf("BoltzCompute/CLI %s", Version)),
+		option.WithHeader("User-Agent", fmt.Sprintf("Boltz/CLI %s", Version)),
 		option.WithHeader("X-Stainless-Lang", "cli"),
 		option.WithHeader("X-Stainless-Package-Version", Version),
 		option.WithHeader("X-Stainless-Runtime", "cli"),

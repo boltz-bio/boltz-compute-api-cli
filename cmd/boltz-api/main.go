@@ -11,7 +11,7 @@ import (
 	"slices"
 
 	"github.com/boltz-bio/boltz-api-cli/pkg/cmd"
-	"github.com/boltz-bio/boltz-compute-api-go"
+	"github.com/boltz-bio/boltz-api-go"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -23,8 +23,8 @@ func main() {
 		prepareForAutocomplete(app)
 	}
 
-	if baseURL, ok := os.LookupEnv("BOLTZ_COMPUTE_BASE_URL"); ok {
-		if err := cmd.ValidateBaseURL(baseURL, "BOLTZ_COMPUTE_BASE_URL"); err != nil {
+	if baseURL, ok := os.LookupEnv("BOLTZ_BASE_URL"); ok {
+		if err := cmd.ValidateBaseURL(baseURL, "BOLTZ_BASE_URL"); err != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 			os.Exit(1)
 		}
@@ -38,7 +38,7 @@ func main() {
 			exitCode = exitErr.ExitCode()
 		}
 
-		var apierr *boltzcompute.Error
+		var apierr *boltzapi.Error
 		if errors.As(err, &apierr) {
 			fmt.Fprintf(os.Stderr, "%s %q: %d %s\n", apierr.Request.Method, apierr.Request.URL, apierr.Response.StatusCode, http.StatusText(apierr.Response.StatusCode))
 			format := app.String("format-error")

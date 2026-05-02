@@ -67,7 +67,7 @@ snapshot:
 
 nfpms:
   - license: Apache-2.0
-    maintainer: support@boltz.bio
+    maintainer: contact@boltz.bio
     bindir: /usr
     formats:
       - apk

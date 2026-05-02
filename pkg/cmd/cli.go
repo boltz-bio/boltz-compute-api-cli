@@ -8,8 +8,8 @@ import (
 
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
-	"github.com/boltz-bio/boltz-compute-api-go"
-	"github.com/boltz-bio/boltz-compute-api-go/option"
+	"github.com/boltz-bio/boltz-api-go"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -33,7 +33,7 @@ var cliVersion = cli.Command{
 }
 
 func handleCliVersion(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -51,7 +51,7 @@ func handleCliVersion(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.CliVersionParams{}
+	params := boltzapi.CliVersionParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
