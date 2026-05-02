@@ -8,7 +8,7 @@ import (
 	"os"
 	"slices"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/pkg/cmd"
+	"github.com/boltz-bio/boltz-api-cli/pkg/cmd"
 	"github.com/urfave/cli/v3"
 )
 
