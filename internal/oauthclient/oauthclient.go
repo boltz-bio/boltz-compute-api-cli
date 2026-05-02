@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
+	"github.com/boltz-bio/boltz-api-cli/internal/authstore"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
 )

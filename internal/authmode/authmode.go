@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/autherror"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/oauthclient"
+	"github.com/boltz-bio/boltz-api-cli/internal/authconfig"
+	"github.com/boltz-bio/boltz-api-cli/internal/autherror"
+	"github.com/boltz-bio/boltz-api-cli/internal/authstore"
+	"github.com/boltz-bio/boltz-api-cli/internal/oauthclient"
 )
 
 const refreshThreshold = 60 * time.Second

@@ -5,11 +5,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/boltz-bio/boltz-api-go"
 
-	boltzcompute "github.com/boltz-bio/boltz-api-go"
-	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -318,7 +318,7 @@ var smallMoleculeLibraryScreenStop = cli.Command{
 }
 
 func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -339,7 +339,7 @@ func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Comm
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenGetParams{}
+	params := boltzapi.SmallMoleculeLibraryScreenGetParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -367,7 +367,7 @@ func handleSmallMoleculeLibraryScreenRetrieve(ctx context.Context, cmd *cli.Comm
 }
 
 func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -385,7 +385,7 @@ func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command)
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenListParams{}
+	params := boltzapi.SmallMoleculeLibraryScreenListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -422,7 +422,7 @@ func handleSmallMoleculeLibraryScreenList(ctx context.Context, cmd *cli.Command)
 }
 
 func handleSmallMoleculeLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -464,7 +464,7 @@ func handleSmallMoleculeLibraryScreenDeleteData(ctx context.Context, cmd *cli.Co
 }
 
 func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -482,7 +482,7 @@ func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenEstimateCostParams{}
+	params := boltzapi.SmallMoleculeLibraryScreenEstimateCostParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -505,7 +505,7 @@ func handleSmallMoleculeLibraryScreenEstimateCost(ctx context.Context, cmd *cli.
 }
 
 func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -526,7 +526,7 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenListResultsParams{}
+	params := boltzapi.SmallMoleculeLibraryScreenListResultsParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -573,7 +573,7 @@ func handleSmallMoleculeLibraryScreenListResults(ctx context.Context, cmd *cli.C
 }
 
 func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -591,7 +591,7 @@ func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command
 		return err
 	}
 
-	params := boltzcompute.SmallMoleculeLibraryScreenStartParams{}
+	params := boltzapi.SmallMoleculeLibraryScreenStartParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -614,7 +614,7 @@ func handleSmallMoleculeLibraryScreenStart(ctx context.Context, cmd *cli.Command
 }
 
 func handleSmallMoleculeLibraryScreenStop(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])

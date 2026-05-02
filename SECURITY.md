@@ -16,11 +16,11 @@ before making any information public.
 ## Reporting Non-SDK Related Security Issues
 
 If you encounter security issues that are not directly related to SDKs but pertain to the services
-or products provided by Boltz Compute, please follow the respective company's security reporting guidelines.
+or products provided by Boltz, please follow the respective company's security reporting guidelines.
 
-### Boltz Compute Terms and Policies
+### Boltz Terms and Policies
 
-Please contact support@boltz.bio for any questions or concerns regarding the security of our services.
+Please contact contact@boltz.bio for any questions or concerns regarding the security of our services.
 
 ---
 

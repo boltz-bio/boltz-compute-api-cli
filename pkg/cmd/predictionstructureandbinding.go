@@ -5,11 +5,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/boltz-bio/boltz-api-go"
 
-	boltzcompute "github.com/boltz-bio/boltz-api-go"
-	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -211,7 +211,7 @@ var predictionsStructureAndBindingStart = requestflag.WithInnerFlags(cli.Command
 })
 
 func handlePredictionsStructureAndBindingRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -232,7 +232,7 @@ func handlePredictionsStructureAndBindingRetrieve(ctx context.Context, cmd *cli.
 		return err
 	}
 
-	params := boltzcompute.PredictionStructureAndBindingGetParams{}
+	params := boltzapi.PredictionStructureAndBindingGetParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -260,7 +260,7 @@ func handlePredictionsStructureAndBindingRetrieve(ctx context.Context, cmd *cli.
 }
 
 func handlePredictionsStructureAndBindingList(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -278,7 +278,7 @@ func handlePredictionsStructureAndBindingList(ctx context.Context, cmd *cli.Comm
 		return err
 	}
 
-	params := boltzcompute.PredictionStructureAndBindingListParams{}
+	params := boltzapi.PredictionStructureAndBindingListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -315,7 +315,7 @@ func handlePredictionsStructureAndBindingList(ctx context.Context, cmd *cli.Comm
 }
 
 func handlePredictionsStructureAndBindingDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -357,7 +357,7 @@ func handlePredictionsStructureAndBindingDeleteData(ctx context.Context, cmd *cl
 }
 
 func handlePredictionsStructureAndBindingEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -375,7 +375,7 @@ func handlePredictionsStructureAndBindingEstimateCost(ctx context.Context, cmd *
 		return err
 	}
 
-	params := boltzcompute.PredictionStructureAndBindingEstimateCostParams{}
+	params := boltzapi.PredictionStructureAndBindingEstimateCostParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -398,7 +398,7 @@ func handlePredictionsStructureAndBindingEstimateCost(ctx context.Context, cmd *
 }
 
 func handlePredictionsStructureAndBindingStart(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -416,7 +416,7 @@ func handlePredictionsStructureAndBindingStart(ctx context.Context, cmd *cli.Com
 		return err
 	}
 
-	params := boltzcompute.PredictionStructureAndBindingStartParams{}
+	params := boltzapi.PredictionStructureAndBindingStartParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))

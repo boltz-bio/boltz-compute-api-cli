@@ -19,8 +19,8 @@ func main() {
 		prepareForAutocomplete(app)
 	}
 
-	if baseURL, ok := os.LookupEnv("BOLTZ_COMPUTE_BASE_URL"); ok {
-		if err := cmd.ValidateBaseURL(baseURL, "BOLTZ_COMPUTE_BASE_URL"); err != nil {
+	if baseURL, ok := os.LookupEnv("BOLTZ_BASE_URL"); ok {
+		if err := cmd.ValidateBaseURL(baseURL, "BOLTZ_BASE_URL"); err != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
 			os.Exit(1)
 		}

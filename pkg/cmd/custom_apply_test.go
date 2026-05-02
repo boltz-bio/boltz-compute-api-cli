@@ -8,7 +8,7 @@ import (
 	docs "github.com/urfave/cli-docs/v3"
 	"github.com/urfave/cli/v3"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
 )
 
 func TestApplyCustomizationsPreservesNativeIDFlags(t *testing.T) {

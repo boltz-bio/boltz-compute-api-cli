@@ -5,11 +5,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/boltz-bio/boltz-api-go"
 
-	boltzcompute "github.com/boltz-bio/boltz-api-go"
-	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -230,7 +230,7 @@ var proteinLibraryScreenStop = cli.Command{
 }
 
 func handleProteinLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -251,7 +251,7 @@ func handleProteinLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) e
 		return err
 	}
 
-	params := boltzcompute.ProteinLibraryScreenGetParams{}
+	params := boltzapi.ProteinLibraryScreenGetParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -279,7 +279,7 @@ func handleProteinLibraryScreenRetrieve(ctx context.Context, cmd *cli.Command) e
 }
 
 func handleProteinLibraryScreenList(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -297,7 +297,7 @@ func handleProteinLibraryScreenList(ctx context.Context, cmd *cli.Command) error
 		return err
 	}
 
-	params := boltzcompute.ProteinLibraryScreenListParams{}
+	params := boltzapi.ProteinLibraryScreenListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -334,7 +334,7 @@ func handleProteinLibraryScreenList(ctx context.Context, cmd *cli.Command) error
 }
 
 func handleProteinLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -376,7 +376,7 @@ func handleProteinLibraryScreenDeleteData(ctx context.Context, cmd *cli.Command)
 }
 
 func handleProteinLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -394,7 +394,7 @@ func handleProteinLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Comman
 		return err
 	}
 
-	params := boltzcompute.ProteinLibraryScreenEstimateCostParams{}
+	params := boltzapi.ProteinLibraryScreenEstimateCostParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -417,7 +417,7 @@ func handleProteinLibraryScreenEstimateCost(ctx context.Context, cmd *cli.Comman
 }
 
 func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -438,7 +438,7 @@ func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command
 		return err
 	}
 
-	params := boltzcompute.ProteinLibraryScreenListResultsParams{}
+	params := boltzapi.ProteinLibraryScreenListResultsParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -485,7 +485,7 @@ func handleProteinLibraryScreenListResults(ctx context.Context, cmd *cli.Command
 }
 
 func handleProteinLibraryScreenStart(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -503,7 +503,7 @@ func handleProteinLibraryScreenStart(ctx context.Context, cmd *cli.Command) erro
 		return err
 	}
 
-	params := boltzcompute.ProteinLibraryScreenStartParams{}
+	params := boltzapi.ProteinLibraryScreenStartParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -526,7 +526,7 @@ func handleProteinLibraryScreenStart(ctx context.Context, cmd *cli.Command) erro
 }
 
 func handleProteinLibraryScreenStop(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])

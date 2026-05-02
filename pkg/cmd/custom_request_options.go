@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/boltz-bio/boltz-api-cli/internal/authconfig"
+	"github.com/boltz-bio/boltz-api-cli/internal/authmode"
 	"github.com/boltz-bio/boltz-api-go/option"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authmode"
 	"github.com/urfave/cli/v3"
 )
 

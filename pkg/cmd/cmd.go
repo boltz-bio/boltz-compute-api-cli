@@ -26,7 +26,7 @@ var (
 func init() {
 	Command = &cli.Command{
 		Name:      "boltz-api",
-		Usage:     "CLI for the boltz-compute API",
+		Usage:     "CLI for the boltz API",
 		Suggest:   true,
 		Version:   Version,
 		ErrWriter: &CommandErrorBuffer,
@@ -80,7 +80,7 @@ func init() {
 			},
 			&requestflag.Flag[string]{
 				Name:    "api-key",
-				Sources: cli.EnvVars("BOLTZ_COMPUTE_API_KEY"),
+				Sources: cli.EnvVars("BOLTZ_API_KEY"),
 			},
 		},
 		Commands: []*cli.Command{

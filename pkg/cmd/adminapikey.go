@@ -5,11 +5,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/boltz-bio/boltz-api-go"
 
-	boltzcompute "github.com/boltz-bio/boltz-api-go"
-	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -103,7 +103,7 @@ var adminAPIKeysRevoke = cli.Command{
 }
 
 func handleAdminAPIKeysCreate(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -121,7 +121,7 @@ func handleAdminAPIKeysCreate(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.AdminAPIKeyNewParams{}
+	params := boltzapi.AdminAPIKeyNewParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -144,7 +144,7 @@ func handleAdminAPIKeysCreate(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminAPIKeysList(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -162,7 +162,7 @@ func handleAdminAPIKeysList(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.AdminAPIKeyListParams{}
+	params := boltzapi.AdminAPIKeyListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -199,7 +199,7 @@ func handleAdminAPIKeysList(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleAdminAPIKeysRevoke(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("api-key-id") && len(unusedArgs) > 0 {
 		cmd.Set("api-key-id", unusedArgs[0])

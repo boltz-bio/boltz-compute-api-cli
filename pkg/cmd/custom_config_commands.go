@@ -6,9 +6,9 @@ import (
 	"errors"
 	"os"
 
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authconfig"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/autherror"
-	"github.com/boltz-bio/boltz-compute-api-cli/internal/authstore"
+	"github.com/boltz-bio/boltz-api-cli/internal/authconfig"
+	"github.com/boltz-bio/boltz-api-cli/internal/autherror"
+	"github.com/boltz-bio/boltz-api-cli/internal/authstore"
 	"github.com/urfave/cli/v3"
 )
 

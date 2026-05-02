@@ -5,11 +5,11 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/boltz-bio/boltz-api-go"
 
-	boltzcompute "github.com/boltz-bio/boltz-api-go"
-	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/boltz-bio/boltz-api-cli/internal/apiquery"
 	"github.com/boltz-bio/boltz-api-cli/internal/requestflag"
+	"github.com/boltz-bio/boltz-api-go/option"
 	"github.com/tidwall/gjson"
 	"github.com/urfave/cli/v3"
 )
@@ -216,7 +216,7 @@ var proteinDesignStop = cli.Command{
 }
 
 func handleProteinDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -237,7 +237,7 @@ func handleProteinDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.ProteinDesignGetParams{}
+	params := boltzapi.ProteinDesignGetParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -265,7 +265,7 @@ func handleProteinDesignRetrieve(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleProteinDesignList(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -283,7 +283,7 @@ func handleProteinDesignList(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.ProteinDesignListParams{}
+	params := boltzapi.ProteinDesignListParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -320,7 +320,7 @@ func handleProteinDesignList(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleProteinDesignDeleteData(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -362,7 +362,7 @@ func handleProteinDesignDeleteData(ctx context.Context, cmd *cli.Command) error 
 }
 
 func handleProteinDesignEstimateCost(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -380,7 +380,7 @@ func handleProteinDesignEstimateCost(ctx context.Context, cmd *cli.Command) erro
 		return err
 	}
 
-	params := boltzcompute.ProteinDesignEstimateCostParams{}
+	params := boltzapi.ProteinDesignEstimateCostParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -403,7 +403,7 @@ func handleProteinDesignEstimateCost(ctx context.Context, cmd *cli.Command) erro
 }
 
 func handleProteinDesignListResults(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
@@ -424,7 +424,7 @@ func handleProteinDesignListResults(ctx context.Context, cmd *cli.Command) error
 		return err
 	}
 
-	params := boltzcompute.ProteinDesignListResultsParams{}
+	params := boltzapi.ProteinDesignListResultsParams{}
 
 	format := cmd.Root().String("format")
 	explicitFormat := cmd.Root().IsSet("format")
@@ -471,7 +471,7 @@ func handleProteinDesignListResults(ctx context.Context, cmd *cli.Command) error
 }
 
 func handleProteinDesignStart(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 
 	if len(unusedArgs) > 0 {
@@ -489,7 +489,7 @@ func handleProteinDesignStart(ctx context.Context, cmd *cli.Command) error {
 		return err
 	}
 
-	params := boltzcompute.ProteinDesignStartParams{}
+	params := boltzapi.ProteinDesignStartParams{}
 
 	var res []byte
 	options = append(options, option.WithResponseBodyInto(&res))
@@ -512,7 +512,7 @@ func handleProteinDesignStart(ctx context.Context, cmd *cli.Command) error {
 }
 
 func handleProteinDesignStop(ctx context.Context, cmd *cli.Command) error {
-	client := boltzcompute.NewClient(getDefaultRequestOptions(cmd)...)
+	client := boltzapi.NewClient(getDefaultRequestOptions(cmd)...)
 	unusedArgs := cmd.Args().Slice()
 	if !cmd.IsSet("id") && len(unusedArgs) > 0 {
 		cmd.Set("id", unusedArgs[0])
