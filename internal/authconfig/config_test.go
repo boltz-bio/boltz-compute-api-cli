@@ -83,7 +83,7 @@ func resolveForArgs(t *testing.T, args ...string) Resolved {
 		Flags: []cli.Flag{
 			&requestflag.Flag[string]{
 				Name:    "api-key",
-				Sources: cli.EnvVars("BOLTZ_COMPUTE_API_KEY"),
+				Sources: cli.EnvVars("BOLTZ_API_KEY"),
 			},
 			&cli.StringFlag{Name: "auth-issuer-url", Sources: cli.EnvVars(EnvAuthIssuerURL)},
 			&cli.StringFlag{Name: "auth-client-id", Sources: cli.EnvVars(EnvAuthClientID)},

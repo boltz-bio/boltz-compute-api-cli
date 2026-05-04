@@ -152,7 +152,7 @@ OAuth mode can also be configured with:
 ### OAuth authentication
 
 The CLI supports API-key mode and OAuth bearer-token mode. When `--api-key` or
-`BOLTZ_COMPUTE_API_KEY` is present, API-key mode wins. Otherwise the CLI uses a
+`BOLTZ_API_KEY` is present, API-key mode wins. Otherwise the CLI uses a
 stored OAuth session if one matches the configured issuer, client ID, audience,
 and scopes.
 

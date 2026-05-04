@@ -852,7 +852,7 @@ func newDownloadResultsTestRoot(stdout io.Writer, stderr io.Writer) *cli.Command
 			&cli.BoolFlag{Name: "raw-output"},
 			&requestflag.Flag[string]{
 				Name:    "api-key",
-				Sources: cli.EnvVars("BOLTZ_COMPUTE_API_KEY"),
+				Sources: cli.EnvVars("BOLTZ_API_KEY"),
 			},
 		},
 	}

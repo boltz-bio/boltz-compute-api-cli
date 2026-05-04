@@ -381,7 +381,7 @@ func handleAuthLogin(ctx context.Context, cmd *cli.Command) error {
 		if strings.TrimSpace(resolved.APIKey) != "" {
 			return jsonEvents.write(map[string]any{
 				"event":   "warning",
-				"message": "API-key mode is still active for commands in this shell. Clear `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use the stored OAuth session.",
+				"message": "API-key mode is still active for commands in this shell. Clear `--api-key` or `BOLTZ_API_KEY` to use the stored OAuth session.",
 			})
 		}
 		return nil
@@ -389,7 +389,7 @@ func handleAuthLogin(ctx context.Context, cmd *cli.Command) error {
 
 	fmt.Fprintln(writer, "Authentication successful.")
 	if strings.TrimSpace(resolved.APIKey) != "" {
-		fmt.Fprintln(writer, "API-key mode is still active for commands in this shell. Clear `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use the stored OAuth session.")
+		fmt.Fprintln(writer, "API-key mode is still active for commands in this shell. Clear `--api-key` or `BOLTZ_API_KEY` to use the stored OAuth session.")
 	}
 	return nil
 }
@@ -489,7 +489,7 @@ func handleAuthLogout(ctx context.Context, cmd *cli.Command) error {
 	}
 
 	if strings.TrimSpace(resolved.APIKey) != "" {
-		fmt.Fprintln(commandWriter(cmd), "Logged out. Local OAuth state was cleared, but API-key mode is still active via `--api-key` or `BOLTZ_COMPUTE_API_KEY`.")
+		fmt.Fprintln(commandWriter(cmd), "Logged out. Local OAuth state was cleared, but API-key mode is still active via `--api-key` or `BOLTZ_API_KEY`.")
 		return nil
 	}
 
@@ -873,7 +873,7 @@ func buildAuthStatusResponse(snapshot authSnapshot) (authStatusResponse, bool) {
 				"API-key mode is overriding the stored OAuth session.",
 			})
 			response.Actions = mergeStrings(response.Actions, []string{
-				"Clear `--api-key` or `BOLTZ_COMPUTE_API_KEY` to activate the stored OAuth session.",
+				"Clear `--api-key` or `BOLTZ_API_KEY` to activate the stored OAuth session.",
 			})
 		}
 	case snapshot.sessionMatch:
@@ -889,7 +889,7 @@ func buildAuthStatusResponse(snapshot authSnapshot) (authStatusResponse, bool) {
 		if !response.Authenticated {
 			response.Actions = mergeStrings(response.Actions, []string{
 				"Run `boltz-api auth login` again to create a usable OAuth session.",
-				"Set `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use API-key mode instead.",
+				"Set `--api-key` or `BOLTZ_API_KEY` to use API-key mode instead.",
 			})
 		}
 	case snapshot.session != nil:
@@ -899,12 +899,12 @@ func buildAuthStatusResponse(snapshot authSnapshot) (authStatusResponse, bool) {
 		})
 		response.Actions = mergeStrings(response.Actions, []string{
 			fmt.Sprintf("Run `boltz-api auth login` again for issuer %q and client %q.", snapshot.resolved.IssuerURL, snapshot.resolved.ClientID),
-			"Set `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use API-key mode instead.",
+			"Set `--api-key` or `BOLTZ_API_KEY` to use API-key mode instead.",
 		})
 	default:
 		response.Actions = mergeStrings(response.Actions, []string{
 			"Run `boltz-api auth login` to create an OAuth session.",
-			"Set `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use API-key mode.",
+			"Set `--api-key` or `BOLTZ_API_KEY` to use API-key mode.",
 		})
 	}
 

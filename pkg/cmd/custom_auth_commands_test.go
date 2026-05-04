@@ -79,7 +79,7 @@ func TestAuthWhoAmIReportsOperatorFriendlyIdentityAndSources(t *testing.T) {
 func TestAuthStatusReportsAPIKeyOverride(t *testing.T) {
 	setAuthCommandUserDirs(t)
 	useFileOnlyKeyringForAuthCommandTests(t)
-	t.Setenv("BOLTZ_COMPUTE_API_KEY", "api-key-123")
+	t.Setenv("BOLTZ_API_KEY", "api-key-123")
 
 	require.NoError(t, authconfig.SaveProfile(authconfig.Resolved{
 		IssuerURL:   "https://issuer.example.com",
@@ -241,7 +241,7 @@ func TestAuthValidateRefreshesExpiredSession(t *testing.T) {
 func TestAuthValidateAPIKeyExplainsLocalOnlyCheck(t *testing.T) {
 	setAuthCommandUserDirs(t)
 	useFileOnlyKeyringForAuthCommandTests(t)
-	t.Setenv("BOLTZ_COMPUTE_API_KEY", "api-key-123")
+	t.Setenv("BOLTZ_API_KEY", "api-key-123")
 
 	output, err := runAuthCommand(t, "--format", "json", "auth", "validate")
 	require.NoError(t, err)
@@ -470,7 +470,7 @@ func newAuthTestRoot(writer *os.File) *cli.Command {
 			&cli.StringFlag{Name: "transform"},
 			&requestflag.Flag[string]{
 				Name:    "api-key",
-				Sources: cli.EnvVars("BOLTZ_COMPUTE_API_KEY"),
+				Sources: cli.EnvVars("BOLTZ_API_KEY"),
 			},
 		},
 		Commands: []*cli.Command{authCommand},
