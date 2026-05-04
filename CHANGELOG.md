@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.4 (2026-05-04)
+
+Full Changelog: [v0.15.3...v0.15.4](https://github.com/boltz-bio/boltz-api-cli/compare/v0.15.3...v0.15.4)
+
+### Bug Fixes
+
+* **auth:** use BOLTZ_API_KEY in auth guidance ([e772221](https://github.com/boltz-bio/boltz-api-cli/commit/e77222198ca2e4c8335a7b7161b39c3a88ccce7c))
+
 ## 0.15.3 (2026-05-02)
 
 Full Changelog: [v0.15.2...v0.15.3](https://github.com/boltz-bio/boltz-api-cli/compare/v0.15.2...v0.15.3)
