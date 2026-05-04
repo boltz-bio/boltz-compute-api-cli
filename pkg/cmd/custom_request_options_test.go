@@ -108,7 +108,7 @@ func parsedTestCommand(t *testing.T, args ...string) *cli.Command {
 			&cli.StringFlag{Name: "base-url"},
 			&requestflag.Flag[string]{
 				Name:    "api-key",
-				Sources: cli.EnvVars("BOLTZ_COMPUTE_API_KEY"),
+				Sources: cli.EnvVars("BOLTZ_API_KEY"),
 			},
 		},
 		Commands: []*cli.Command{

@@ -248,7 +248,7 @@ func MissingLoginError() error {
 		"auth_required",
 		"Authentication required",
 		"Run `boltz-api auth login` to create an OAuth session.",
-		"Set `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use API-key mode.",
+		"Set `--api-key` or `BOLTZ_API_KEY` to use API-key mode.",
 		"Run `boltz-api auth whoami` to inspect the current local auth state.",
 	)
 }
@@ -262,7 +262,7 @@ func ReauthError(message string) error {
 		message,
 		"Run `boltz-api auth login` again to refresh the local session.",
 		"Run `boltz-api auth whoami` to inspect the local auth state.",
-		"Set `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use API-key mode instead.",
+		"Set `--api-key` or `BOLTZ_API_KEY` to use API-key mode instead.",
 	)
 }
 
@@ -293,6 +293,6 @@ func sessionMismatchError(resolved authconfig.Resolved) error {
 		fmt.Sprintf("Expected issuer %q and client %q.", resolved.IssuerURL, resolved.ClientID),
 		"Run `boltz-api auth login` again to create a matching OAuth session.",
 		"Run `boltz-api auth whoami` to inspect the local auth state.",
-		"Set `--api-key` or `BOLTZ_COMPUTE_API_KEY` to use API-key mode instead.",
+		"Set `--api-key` or `BOLTZ_API_KEY` to use API-key mode instead.",
 	)
 }
