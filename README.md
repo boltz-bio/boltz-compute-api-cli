@@ -238,6 +238,9 @@ boltz-api --auth-issuer-url "https://lab.customer.example.com" \
   auth login
 ```
 
+After login, subsequent commands reuse the saved tenant API endpoint without
+requiring `--base-url` or `BOLTZ_BASE_URL` on every invocation.
+
 The discovery field is optional, so issuers that omit it preserve the existing
 stored endpoint or the SDK default. During login, base-URL precedence is an
 explicit `--base-url` or non-empty `BOLTZ_BASE_URL`, then issuer discovery, then
