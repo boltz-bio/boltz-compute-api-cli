@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.43.0](https://github.com/boltz-bio/boltz-api-cli/compare/v0.42.0...v0.43.0) (2026-09-07)
+
+
+### Features
+
+* **auth:** release tenant API endpoint discovery ([1d4b017](https://github.com/boltz-bio/boltz-api-cli/commit/1d4b0177519ff82a6543309a2e4a0fd559951cf8))
+* **auth:** release tenant API endpoint discovery ([cb640aa](https://github.com/boltz-bio/boltz-api-cli/commit/cb640aa4d2ca3a14b0424b707370d256f7732f31))
+
 ## [0.42.0](https://github.com/boltz-bio/boltz-api-cli/compare/v0.41.0...v0.42.0) (2026-08-27)
 
 
