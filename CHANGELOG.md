@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.43.1](https://github.com/boltz-bio/boltz-api-cli/compare/v0.43.0...v0.43.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* align Go SDK pin with released generation ([b67a6bd](https://github.com/boltz-bio/boltz-api-cli/commit/b67a6bdef89b124f92e2edafac237972efc2c5ec))
+* align Go SDK pin with released generation ([a5f7451](https://github.com/boltz-bio/boltz-api-cli/commit/a5f74512fac74bedf5246d4637cca9f31ed37583))
+
+
+### Chores
+
+* **sdk:** promote generated SDK ([b2d9726](https://github.com/boltz-bio/boltz-api-cli/commit/b2d9726650edf6cd9bb511fdeb9eb63150488cb0))
+
 ## [0.43.0](https://github.com/boltz-bio/boltz-api-cli/compare/v0.42.0...v0.43.0) (2026-09-07)
 
 
